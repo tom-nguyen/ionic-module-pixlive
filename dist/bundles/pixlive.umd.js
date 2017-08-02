@@ -1,7 +1,7 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('ionic-angular'), require('rxjs/BehaviorSubject'), require('rxjs/Subject')) :
 	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', 'ionic-angular', 'rxjs/BehaviorSubject', 'rxjs/Subject'], factory) :
-	(factory((global.pixlive = global.pixlive || {}),global.ng.core,global['ionic-angular'],global.Rx,global.Rx));
+	(factory((global.pixlive = global.pixlive || {}),global.ng.core,global.ionicangular,global.Rx,global.Rx));
 }(this, (function (exports,_angular_core,ionicAngular,rxjs_BehaviorSubject,rxjs_Subject) { 'use strict';
 
 var PixliveDirective = (function () {

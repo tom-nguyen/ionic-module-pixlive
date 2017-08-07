@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Platform } from 'ionic-angular';
 
 import { Observable } from 'rxjs';
@@ -7,6 +7,10 @@ import { Subject } from 'rxjs/Subject';
 
 declare var window;
 
+/**
+ * Service for interacting with the PixLive SDK.
+ * Call the init() method when starting your application.
+ */
 @Injectable()
 export class PixliveService {
 
@@ -20,27 +24,43 @@ export class PixliveService {
   private enterContext: Subject<string> = new Subject();
 
   constructor(
+    private ngZone: NgZone,
     private platform: Platform
-  ) {}
+  ) { }
 
-  public init() {
+  /**
+   * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
+   * @param gcmSenderId the Google GCM sender ID for the push notifications. Leave it empty if you do not want to enable it.
+   */
+  public init(gcmSenderId?: string) {
     this.platform.ready().then(() => {
       if (window.cordova) {
-         window.cordova.plugins.PixLive.onEventReceived = (event) => {
-          console.log("New event " + JSON.stringify(event));
+        if (gcmSenderId) {
+          window.cordova.plugins.PixLive.setNotificationsSupport(true, gcmSenderId);
+        }
+        // Listen for different PixLive events
+        window.cordova.plugins.PixLive.onEventReceived = (event) => {
           if (event.type === "presentAnnotations") {
-            this.annotationPresence.next(true);
+            this.ngZone.run(() => {
+              this.annotationPresence.next(true);
+            });
           } else if (event.type === "hideAnnotations") {
-            this.annotationPresence.next(false);
+            this.ngZone.run(() => {
+              this.annotationPresence.next(false);
+            });
           } else if (event.type === "eventFromContent") {
             //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-            let eventFromContent = new EventFromContent();
-            eventFromContent.name = event.eventName;
-            eventFromContent.params = event.eventParams;
-            this.eventFromContent.next(eventFromContent);
+            this.ngZone.run(() => {
+              let eventFromContent = new EventFromContent();
+              eventFromContent.name = event.eventName;
+              eventFromContent.params = event.eventParams;
+              this.eventFromContent.next(eventFromContent);
+            });
           } else if (event.type === "enterContext") {
             //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
             this.enterContext.next(event.context);
+          } else if (event.type === "syncProgress") {
+            this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
           }
         }
       }
@@ -53,7 +73,7 @@ export class PixliveService {
    * A value of 100 means that the synchronization is over.
    * A value above 100 means that an error occured during the synchronization.
    */
-  public getSynchronizationProgress() : Observable<number> {
+  public getSynchronizationProgress(): Observable<number> {
     return this.synchronizationProgress.asObservable();
   }
 
@@ -62,14 +82,14 @@ export class PixliveService {
    * "hideAnnotations" (true/false respectively) is called. It informs that
    * an AR annotation is being displayed or not.
    */
-  public getAnnotationPresenceObservable() : Observable<boolean> {
+  public getAnnotationPresenceObservable(): Observable<boolean> {
     return this.annotationPresence.asObservable();
   }
 
   /**
    * Gets an observable that is called when an event from content is triggered (e.g. coupon)
    */
-  public getEventFromContentObservable() : Observable<EventFromContent> {
+  public getEventFromContentObservable(): Observable<EventFromContent> {
     return this.eventFromContent.asObservable();
   }
 
@@ -77,38 +97,55 @@ export class PixliveService {
    * Gets an observable that is called when a context is entered (i.e. activated). It gives
    * the public ID of the context.
    */
-  public getEnterContextObservable() : Observable<string> {
+  public getEnterContextObservable(): Observable<string> {
     return this.enterContext.asObservable();
   }
 
-  // public sync() : void {
-  //   this.syncWithTags();
-  // }
-
   /**
-   * Requests a synchronization with PixLive Maker
+   * Synchronize the PixLive SDK with the web platform.
+   * The synchronization can be done in different ways.
+   *
+   * 1) The synchronization can be done without using the tags, in this case, an empty
+   * array is given as parameter.
+   *
+   * 2) The syncronization can be done with one or more tags. Use an array of strings: ['tag1', 'tag2'].
+   * In this case, all contents having one or more of the given tags will be synchronized.
+   * Think of it as => (tag1 OR tag2).
+   *
+   * 3) The synchronization can be done with a combination of tags. Example: [['lang_en', 'tag1'], ['lang_en', 'tag2']].
+   * In this case, the contents having tags 'lang_en' AND 'tag1' will be synchonized together with the contents having the 'lang_en' AND 'tag2'.
+   * Think of it as => (lang_en AND tag1) OR (lang_en AND tag2).
+   *
+   * @param tags
    */
-  public syncWithTags(tagsObs: Observable<string[][]>) : void {
+  public sync(tags) {
+    console.log("Synchronization with tags: " + JSON.stringify(tags));
     this.synchronizationProgress.next(0);
     this.platform.ready().then(() => {
       if (window.cordova) {
-        this.synchronizationProgress.next(1);
-
-        tagsObs.forEach( tags => {
-          console.log("Sync tags: " + JSON.stringify(tags));
-          window.cordova.plugins.PixLive.synchronize(tags, (contexts) => {
+        window.cordova.plugins.PixLive.synchronize(tags, (contexts) => {
+          this.ngZone.run(() => {
             this.synchronizationProgress.next(100);
-            console.log("Sync success");
-            console.log(contexts);
-          }, (reason) => {
+          });
+        }, (reason) => {
+          this.ngZone.run(() => {
             this.synchronizationProgress.next(102);
-            console.log("Sync failure");
-            console.log(reason);
           });
         });
-
       } else {
-        this.synchronizationProgress.next(103);
+        // The plugin is not available, we simulate a synchronization for development.
+        setTimeout(() => {
+          this.synchronizationProgress.next(25);
+          setTimeout(() => {
+            this.synchronizationProgress.next(50);
+            setTimeout(() => {
+              this.synchronizationProgress.next(75);
+              setTimeout(() => {
+                this.synchronizationProgress.next(103);
+              }, 500);
+            }, 500);
+          }, 500);
+        }, 500);
       }
     });
   }
@@ -118,19 +155,20 @@ export class PixliveService {
    * @param latitude the current latitude
    * @param longitude the current longitude
    */
-  public getGpsPoints(latitude: number, longitude: number): Promise<GPSPoint[]> {
+  public getNearbyGpsPoints(latitude: number, longitude: number): Promise<GPSPoint[]> {
     return new Promise((resolve, reject) => {
       if (window.cordova) {
         window.cordova.plugins.PixLive.getNearbyGPSPoints(latitude, longitude,
           (data) => {
-            console.log("Get gps success");
-            resolve(data as GPSPoint[]);
+            this.ngZone.run(() => {
+              resolve(data as GPSPoint[]);
+            });
           },
           () => {
-            reject("getGpsPoints failed");
+            reject("getNearbyGpsPoints failed");
           });
       } else {
-        reject("getGpsPoints failed: no cordova plugin");
+        reject("getNearbyGpsPoints failed: no cordova plugin");
       }
     });
   }
@@ -160,22 +198,56 @@ export class PixliveService {
 
 
   /**
-   * return the specified context
+   * Return the specified context
    * @param contextId the ID of the context
    */
-  public getContext(contextId: string): Promise<Context> { //TODO context
+  public getContext(contextId: string): Promise<Context> {
     return new Promise((resolve, reject) => {
       if (window.cordova) {
         window.cordova.plugins.PixLive.getContext(contextId,
           (data) => {
-            console.log("Get context success");
-            resolve(data as Context);
+            this.ngZone.run(() => {
+              resolve(data as Context);
+            });
           },
           () => {
             reject("getContext failed");
           });
       } else {
         reject("getContext failed: no cordova plugin");
+      }
+    });
+  }
+
+  /**
+   * Opens the given context
+   * @param contextId the ID of the context to open
+   */
+  public activate(contextId: string) {
+    this.getContext(contextId).then(context => context.activate());
+  }
+
+  /**
+   * Computes the distance between to GPS points
+   * @param latitude1 the latitude of the first point
+   * @param longitude1 the longitude of the first point
+   * @param latitude2 the latitude of the second point
+   * @param longitude2 the longitude of the second point
+   */
+  public computeDistanceBetweenGPSPoints(latitude1: number, longitude1: number, latitude2: number, longitude2: number): Promise<number> {
+    return new Promise((resolve, reject) => {
+      if (window.cordova) {
+        window.cordova.plugins.PixLive.computeDistanceBetweenGPSPoints(latitude1, longitude1, latitude2, longitude2,
+          (data) => {
+            this.ngZone.run(() => {
+              resolve(data);
+            });
+          },
+          () => {
+            reject("computeDistanceBetweenGPSPoints failed");
+          });
+      } else {
+        reject("computeDistanceBetweenGPSPoints failed: no cordova plugin");
       }
     });
   }
@@ -195,6 +267,9 @@ export class GPSPoint {
   contextId: string;
 }
 
+/**
+ * Class representing a Context.
+ */
 export class Context {
   activate: () => void;
   contextId: string;
@@ -206,6 +281,9 @@ export class Context {
   notificationMessage: string;
 }
 
+/**
+ * Class representing a Event triggered by a content
+ */
 export class EventFromContent {
   name: string;
   params: string;

@@ -11,23 +11,19 @@ var PixliveDirective = (function () {
         this.renderer = renderer;
         this.viewCtrl = viewCtrl;
     }
-    PixliveDirective.prototype.getNativeElement = function () {
-        return this.el.nativeElement;
-    };
+    /**
+     * Initializes the AR view lifecycle
+     */
     PixliveDirective.prototype.initArViewLifeCycle = function () {
         var _this = this;
         this.viewCtrl.willEnter.subscribe(function () {
-            console.log("will enter");
             if (_this.arView) {
-                console.log("XXXXXX Opening - beforeEnter");
                 _this.arView.beforeEnter();
-                _this.onOrientationChange(_this.el, _this.arView);
+                _this.onOrientationChange();
             }
         });
         this.viewCtrl.didEnter.subscribe(function () {
-            console.log("did enter");
             if (_this.arView) {
-                console.log("XXXXXX Opening - afterEnter");
                 _this.arView.afterEnter();
             }
             if (_this.fakeCamera) {
@@ -35,33 +31,29 @@ var PixliveDirective = (function () {
             }
         });
         this.viewCtrl.willLeave.subscribe(function () {
-            console.log("will leave");
             if (_this.arView) {
-                console.log("XXXXXX Closing - beforeLeave");
                 _this.arView.beforeLeave();
             }
             if (_this.fakeCamera) {
                 _this.renderer.setElementStyle(_this.fakeCamera, 'display', 'none');
             }
         });
-        this.viewCtrl.willUnload.subscribe(function () {
-            console.log("will unload");
-        });
         this.viewCtrl.didLeave.subscribe(function () {
-            console.log("did leave");
             if (_this.arView) {
-                console.log("XXXXXX Closing - afterLeave");
                 _this.arView.afterLeave();
             }
         });
     };
-    PixliveDirective.prototype.onOrientationChange = function (element, view) {
-        console.log("orientation change");
-        console.log(JSON.stringify(element.nativeElement.getBoundingClientRect()));
+    /**
+     * Call this method after an orientation change for resizing the AR view
+     * @param element
+     * @param view
+     */
+    PixliveDirective.prototype.onOrientationChange = function () {
+        var _this = this;
         setTimeout(function () {
-            var rect = element.nativeElement.getBoundingClientRect();
-            console.log(JSON.stringify(rect));
-            view.resize(rect.left, rect.top, rect.width, rect.height);
+            var rect = _this.el.nativeElement.getBoundingClientRect();
+            _this.arView.resize(rect.left, rect.top, rect.width, rect.height);
         }, 300);
     };
     PixliveDirective.prototype.ngOnInit = function () {
@@ -69,21 +61,15 @@ var PixliveDirective = (function () {
         this.renderer.setElementStyle(this.el.nativeElement, 'display', 'inline-block');
         this.initArViewLifeCycle();
         this.platform.ready().then(function () {
-            console.log("platform ready");
             setTimeout(function () {
                 var rect = _this.el.nativeElement.getBoundingClientRect();
                 if (window.cordova) {
-                    console.log("creating AR view");
+                    // Create the camera view
                     _this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
-                    console.log("AR view created");
-                    var element_1 = _this.el;
-                    var view_1 = _this.arView;
-                    var fct_1 = _this.onOrientationChange;
-                    window.addEventListener("orientationchange", function () {
-                        fct_1(element_1, view_1);
-                    }, false);
+                    window.addEventListener("orientationchange", function () { return _this.onOrientationChange; }, false);
                 }
                 else {
+                    // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.
                     var fakeCamera = document.createElement("DIV");
                     document.body.appendChild(fakeCamera);
                     _this.renderer.setElementStyle(fakeCamera, 'position', 'fixed');
@@ -96,30 +82,18 @@ var PixliveDirective = (function () {
                 }
             }, 300);
         });
+        // The AR view is placed below the application so we set all views that are on top transparent.
         var node = this.el.nativeElement.parentElement;
         while (node) {
             this.renderer.setElementStyle(node, 'background-color', 'transparent');
             node = node.parentElement;
         }
-        // let rect = this.el.nativeElement.getBoundingClientRect();
-        // console.log(this.el);
-        // console.log(rect);
-        // this.viewCtrl..subscribe(() => {
-        //   console.log("did enter");
-        //   let rect = this.el.nativeElement.getBoundingClientRect();
-        //   console.log(rect);
-        //   console.log(window.scrollX + " " + window.scrollY);
-        // });
     };
-    PixliveDirective.prototype.ngAfterViewInit = function () {
-        console.log("ng after view init");
-    };
-    PixliveDirective.prototype.ngDoCheck = function () {
-        console.log("ng do check");
-    };
-    PixliveDirective.prototype.ngAfterViewChecked = function () {
-        console.log("ng after view checked");
-    };
+    /**
+     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+     * If a view in on top of the component, then you must disable the click interception.
+     * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
+     */
     PixliveDirective.prototype.setTouchEnabled = function (enabled) {
         if (enabled) {
             this.arView.enableTouch();
@@ -130,9 +104,7 @@ var PixliveDirective = (function () {
     };
     PixliveDirective.decorators = [
         { type: _angular_core.Directive, args: [{
-                    //moduleId: module.id,
                     selector: 'pixlive-camera-view'
-                    //templateUrl: 'pixlive.component.html'
                 },] },
     ];
     /** @nocollapse */
@@ -145,8 +117,13 @@ var PixliveDirective = (function () {
     return PixliveDirective;
 }());
 
+/**
+ * Service for interacting with the PixLive SDK.
+ * Call the init() method when starting your application.
+ */
 var PixliveService = (function () {
-    function PixliveService(platform) {
+    function PixliveService(ngZone, platform) {
+        this.ngZone = ngZone;
         this.platform = platform;
         /**
          * BehaviorSubject keeping track of the synchronization progress.
@@ -156,28 +133,44 @@ var PixliveService = (function () {
         this.eventFromContent = new rxjs_Subject.Subject();
         this.enterContext = new rxjs_Subject.Subject();
     }
-    PixliveService.prototype.init = function () {
+    /**
+     * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
+     * @param gcmSenderId the Google GCM sender ID for the push notifications. Leave it empty if you do not want to enable it.
+     */
+    PixliveService.prototype.init = function (gcmSenderId) {
         var _this = this;
         this.platform.ready().then(function () {
             if (window.cordova) {
+                if (gcmSenderId) {
+                    window.cordova.plugins.PixLive.setNotificationsSupport(true, gcmSenderId);
+                }
+                // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
-                    console.log("New event " + JSON.stringify(event));
                     if (event.type === "presentAnnotations") {
-                        _this.annotationPresence.next(true);
+                        _this.ngZone.run(function () {
+                            _this.annotationPresence.next(true);
+                        });
                     }
                     else if (event.type === "hideAnnotations") {
-                        _this.annotationPresence.next(false);
+                        _this.ngZone.run(function () {
+                            _this.annotationPresence.next(false);
+                        });
                     }
                     else if (event.type === "eventFromContent") {
                         //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-                        var eventFromContent = new EventFromContent();
-                        eventFromContent.name = event.eventName;
-                        eventFromContent.params = event.eventParams;
-                        _this.eventFromContent.next(eventFromContent);
+                        _this.ngZone.run(function () {
+                            var eventFromContent = new EventFromContent();
+                            eventFromContent.name = event.eventName;
+                            eventFromContent.params = event.eventParams;
+                            _this.eventFromContent.next(eventFromContent);
+                        });
                     }
                     else if (event.type === "enterContext") {
                         //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
                         _this.enterContext.next(event.context);
+                    }
+                    else if (event.type === "syncProgress") {
+                        _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
                     }
                 };
             }
@@ -213,33 +206,53 @@ var PixliveService = (function () {
     PixliveService.prototype.getEnterContextObservable = function () {
         return this.enterContext.asObservable();
     };
-    // public sync() : void {
-    //   this.syncWithTags();
-    // }
     /**
-     * Requests a synchronization with PixLive Maker
+     * Synchronize the PixLive SDK with the web platform.
+     * The synchronization can be done in different ways.
+     *
+     * 1) The synchronization can be done without using the tags, in this case, an empty
+     * array is given as parameter.
+     *
+     * 2) The syncronization can be done with one or more tags. Use an array of strings: ['tag1', 'tag2'].
+     * In this case, all contents having one or more of the given tags will be synchronized.
+     * Think of it as => (tag1 OR tag2).
+     *
+     * 3) The synchronization can be done with a combination of tags. Example: [['lang_en', 'tag1'], ['lang_en', 'tag2']].
+     * In this case, the contents having tags 'lang_en' AND 'tag1' will be synchonized together with the contents having the 'lang_en' AND 'tag2'.
+     * Think of it as => (lang_en AND tag1) OR (lang_en AND tag2).
+     *
+     * @param tags
      */
-    PixliveService.prototype.syncWithTags = function (tagsObs) {
+    PixliveService.prototype.sync = function (tags) {
         var _this = this;
+        console.log("Synchronization with tags: " + JSON.stringify(tags));
         this.synchronizationProgress.next(0);
         this.platform.ready().then(function () {
             if (window.cordova) {
-                _this.synchronizationProgress.next(1);
-                tagsObs.forEach(function (tags) {
-                    console.log("Sync tags: " + JSON.stringify(tags));
-                    window.cordova.plugins.PixLive.synchronize(tags, function (contexts) {
+                window.cordova.plugins.PixLive.synchronize(tags, function (contexts) {
+                    _this.ngZone.run(function () {
                         _this.synchronizationProgress.next(100);
-                        console.log("Sync success");
-                        console.log(contexts);
-                    }, function (reason) {
+                    });
+                }, function (reason) {
+                    _this.ngZone.run(function () {
                         _this.synchronizationProgress.next(102);
-                        console.log("Sync failure");
-                        console.log(reason);
                     });
                 });
             }
             else {
-                _this.synchronizationProgress.next(103);
+                // The plugin is not available, we simulate a synchronization for development.
+                setTimeout(function () {
+                    _this.synchronizationProgress.next(25);
+                    setTimeout(function () {
+                        _this.synchronizationProgress.next(50);
+                        setTimeout(function () {
+                            _this.synchronizationProgress.next(75);
+                            setTimeout(function () {
+                                _this.synchronizationProgress.next(103);
+                            }, 500);
+                        }, 500);
+                    }, 500);
+                }, 500);
             }
         });
     };
@@ -248,18 +261,20 @@ var PixliveService = (function () {
      * @param latitude the current latitude
      * @param longitude the current longitude
      */
-    PixliveService.prototype.getGpsPoints = function (latitude, longitude) {
+    PixliveService.prototype.getNearbyGpsPoints = function (latitude, longitude) {
+        var _this = this;
         return new Promise(function (resolve, reject) {
             if (window.cordova) {
                 window.cordova.plugins.PixLive.getNearbyGPSPoints(latitude, longitude, function (data) {
-                    console.log("Get gps success");
-                    resolve(data);
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
                 }, function () {
-                    reject("getGpsPoints failed");
+                    reject("getNearbyGpsPoints failed");
                 });
             }
             else {
-                reject("getGpsPoints failed: no cordova plugin");
+                reject("getNearbyGpsPoints failed: no cordova plugin");
             }
         });
     };
@@ -285,15 +300,17 @@ var PixliveService = (function () {
         });
     };
     /**
-     * return the specified context
+     * Return the specified context
      * @param contextId the ID of the context
      */
     PixliveService.prototype.getContext = function (contextId) {
+        var _this = this;
         return new Promise(function (resolve, reject) {
             if (window.cordova) {
                 window.cordova.plugins.PixLive.getContext(contextId, function (data) {
-                    console.log("Get context success");
-                    resolve(data);
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
                 }, function () {
                     reject("getContext failed");
                 });
@@ -303,15 +320,50 @@ var PixliveService = (function () {
             }
         });
     };
+    /**
+     * Opens the given context
+     * @param contextId the ID of the context to open
+     */
+    PixliveService.prototype.activate = function (contextId) {
+        this.getContext(contextId).then(function (context) { return context.activate(); });
+    };
+    /**
+     * Computes the distance between to GPS points
+     * @param latitude1 the latitude of the first point
+     * @param longitude1 the longitude of the first point
+     * @param latitude2 the latitude of the second point
+     * @param longitude2 the longitude of the second point
+     */
+    PixliveService.prototype.computeDistanceBetweenGPSPoints = function (latitude1, longitude1, latitude2, longitude2) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (window.cordova) {
+                window.cordova.plugins.PixLive.computeDistanceBetweenGPSPoints(latitude1, longitude1, latitude2, longitude2, function (data) {
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
+                }, function () {
+                    reject("computeDistanceBetweenGPSPoints failed");
+                });
+            }
+            else {
+                reject("computeDistanceBetweenGPSPoints failed: no cordova plugin");
+            }
+        });
+    };
     PixliveService.decorators = [
         { type: _angular_core.Injectable },
     ];
     /** @nocollapse */
     PixliveService.ctorParameters = function () { return [
+        { type: _angular_core.NgZone, },
         { type: ionicAngular.Platform, },
     ]; };
     return PixliveService;
 }());
+/**
+ * Class representing a Event triggered by a content
+ */
 var EventFromContent = (function () {
     function EventFromContent() {
     }
@@ -319,40 +371,20 @@ var EventFromContent = (function () {
 }());
 
 var PixliveComponent = (function () {
-    function PixliveComponent(platform, el, renderer, viewCtrl, pixliveService) {
-        this.platform = platform;
-        this.el = el;
-        this.renderer = renderer;
-        this.viewCtrl = viewCtrl;
+    function PixliveComponent(pixliveService) {
         this.pixliveService = pixliveService;
     }
     PixliveComponent.prototype.ngOnInit = function () {
         var _this = this;
         this.pixliveService.getAnnotationPresenceObservable().subscribe(function (visible) { return _this.cameraView.setTouchEnabled(visible); });
-        // this.renderer.setElementStyle(this.el.nativeElement, 'display', 'inline-block');
-        // let node = this.el.nativeElement.parentElement;
-        // while (node) {
-        //   this.renderer.setElementStyle(node, 'background-color', 'transparent');
-        //   node = node.parentElement;
-        // }
-        // let rect = this.el.nativeElement.getBoundingClientRect();
-        // console.log(this.el);
-        // console.log(rect);
-        // // this.viewCtrl..subscribe(() => {
-        // //   console.log("did enter");
-        // //   let rect = this.el.nativeElement.getBoundingClientRect();
-        // //   console.log(rect);
-        // //   console.log(window.scrollX + " " + window.scrollY);
-        // // });
     };
-    PixliveComponent.prototype.ngAfterViewInit = function () {
-        //console.log("comp ng after view init");
-    };
-    PixliveComponent.prototype.ngDoCheck = function () {
-        // console.log("comp ng do check");
-    };
-    PixliveComponent.prototype.ngAfterViewChecked = function () {
-        // console.log("comp ng after view checked");
+    /**
+     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+     * If a view in on top of the component, then you must disable the click interception.
+     * @param clickable true if the view is clickable and intercept all touch events, false otherwise.
+     */
+    PixliveComponent.prototype.setClickable = function (clickable) {
+        this.cameraView.setTouchEnabled(clickable);
     };
     PixliveComponent.decorators = [
         { type: _angular_core.Component, args: [{
@@ -362,10 +394,6 @@ var PixliveComponent = (function () {
     ];
     /** @nocollapse */
     PixliveComponent.ctorParameters = function () { return [
-        { type: ionicAngular.Platform, },
-        { type: _angular_core.ElementRef, },
-        { type: _angular_core.Renderer, },
-        { type: ionicAngular.ViewController, },
         { type: PixliveService, },
     ]; };
     PixliveComponent.propDecorators = {

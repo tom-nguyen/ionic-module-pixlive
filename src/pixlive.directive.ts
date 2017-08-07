@@ -1,39 +1,38 @@
-import { Directive, ElementRef, OnInit, Renderer }      from '@angular/core';
+import { Directive, ElementRef, OnInit, Renderer } from '@angular/core';
 import { Platform, ViewController } from 'ionic-angular';
 
 declare var window;
 
 @Directive({
-  //moduleId: module.id,
   selector: 'pixlive-camera-view'
-  //templateUrl: 'pixlive.component.html'
 })
 export class PixliveDirective implements OnInit {
 
-  private arView;
-  private fakeCamera;
+  /**
+   * Cordova PixLive Camera AR view
+   */
+  private arView: PixliveARView;
+
+  /**
+   * HTML element displayed instead of the camera when serving the file on the browser for development
+   */
+  private fakeCamera: HTMLElement;
 
   constructor(private platform: Platform, private el: ElementRef, private renderer: Renderer, private viewCtrl: ViewController) {
-
   }
 
-  public getNativeElement() {
-    return this.el.nativeElement;
-  }
-
+  /**
+   * Initializes the AR view lifecycle
+   */
   private initArViewLifeCycle() {
     this.viewCtrl.willEnter.subscribe(() => {
-      console.log("will enter");
       if (this.arView) {
-        console.log("XXXXXX Opening - beforeEnter");
         this.arView.beforeEnter();
-        this.onOrientationChange(this.el, this.arView);
+        this.onOrientationChange();
       }
     });
     this.viewCtrl.didEnter.subscribe(() => {
-      console.log("did enter");
       if (this.arView) {
-        console.log("XXXXXX Opening - afterEnter");
         this.arView.afterEnter();
       }
       if (this.fakeCamera) {
@@ -41,34 +40,29 @@ export class PixliveDirective implements OnInit {
       }
     });
     this.viewCtrl.willLeave.subscribe(() => {
-      console.log("will leave");
       if (this.arView) {
-        console.log("XXXXXX Closing - beforeLeave");
         this.arView.beforeLeave();
       }
       if (this.fakeCamera) {
         this.renderer.setElementStyle(this.fakeCamera, 'display', 'none');
       }
     });
-    this.viewCtrl.willUnload.subscribe(() => {
-      console.log("will unload");
-    });
     this.viewCtrl.didLeave.subscribe(() => {
-      console.log("did leave");
       if (this.arView) {
-        console.log("XXXXXX Closing - afterLeave");
         this.arView.afterLeave();
       }
     });
   }
 
-  private onOrientationChange(element, view) {
-    console.log("orientation change");
-    console.log(JSON.stringify(element.nativeElement.getBoundingClientRect()));
+  /**
+   * Call this method after an orientation change for resizing the AR view
+   * @param element
+   * @param view
+   */
+  private onOrientationChange() {
     setTimeout(() => {
-      let rect = element.nativeElement.getBoundingClientRect();
-      console.log(JSON.stringify(rect));
-      view.resize(rect.left, rect.top, rect.width, rect.height);
+      let rect = this.el.nativeElement.getBoundingClientRect();
+      this.arView.resize(rect.left, rect.top, rect.width, rect.height);
     }, 300);
   }
 
@@ -78,21 +72,14 @@ export class PixliveDirective implements OnInit {
     this.initArViewLifeCycle();
 
     this.platform.ready().then(() => {
-      console.log("platform ready");
       setTimeout(() => {
         let rect = this.el.nativeElement.getBoundingClientRect();
         if (window.cordova) {
-          console.log("creating AR view");
+          // Create the camera view
           this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
-          console.log("AR view created");
-
-          let element = this.el;
-          let view = this.arView;
-          let fct = this.onOrientationChange;
-          window.addEventListener("orientationchange", function () {
-            fct(element, view);
-          }, false);
+          window.addEventListener("orientationchange", () => this.onOrientationChange, false);
         } else {
+          // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.
           let fakeCamera = document.createElement("DIV");
           document.body.appendChild(fakeCamera);
           this.renderer.setElementStyle(fakeCamera, 'position', 'fixed');
@@ -106,37 +93,19 @@ export class PixliveDirective implements OnInit {
       }, 300);
     });
 
-
+    // The AR view is placed below the application so we set all views that are on top transparent.
     let node = this.el.nativeElement.parentElement;
     while (node) {
       this.renderer.setElementStyle(node, 'background-color', 'transparent');
       node = node.parentElement;
     }
-
-    // let rect = this.el.nativeElement.getBoundingClientRect();
-    // console.log(this.el);
-    // console.log(rect);
-
-    // this.viewCtrl..subscribe(() => {
-    //   console.log("did enter");
-    //   let rect = this.el.nativeElement.getBoundingClientRect();
-    //   console.log(rect);
-    //   console.log(window.scrollX + " " + window.scrollY);
-    // });
   }
 
-  ngAfterViewInit() {
-    console.log("ng after view init");
-  }
-
-  ngDoCheck() {
-    console.log("ng do check");
-  }
-
-  ngAfterViewChecked() {
-    console.log("ng after view checked");
-  }
-
+  /**
+   * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+   * If a view in on top of the component, then you must disable the click interception.
+   * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
+   */
   public setTouchEnabled(enabled: boolean) {
     if (enabled) {
       this.arView.enableTouch();
@@ -145,4 +114,14 @@ export class PixliveDirective implements OnInit {
     }
   }
 
+}
+
+interface PixliveARView {
+  beforeEnter();
+  afterEnter();
+  enableTouch();
+  disableTouch();
+  beforeLeave();
+  afterLeave();
+  resize(left: number, top: number, width: number, height: number);
 }

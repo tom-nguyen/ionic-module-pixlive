@@ -1,6 +1,12 @@
+import { NgZone } from '@angular/core';
 import { Platform } from 'ionic-angular';
 import { Observable } from 'rxjs';
+/**
+ * Service for interacting with the PixLive SDK.
+ * Call the init() method when starting your application.
+ */
 export declare class PixliveService {
+    private ngZone;
     private platform;
     /**
      * BehaviorSubject keeping track of the synchronization progress.
@@ -9,8 +15,12 @@ export declare class PixliveService {
     private annotationPresence;
     private eventFromContent;
     private enterContext;
-    constructor(platform: Platform);
-    init(): void;
+    constructor(ngZone: NgZone, platform: Platform);
+    /**
+     * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
+     * @param gcmSenderId the Google GCM sender ID for the push notifications. Leave it empty if you do not want to enable it.
+     */
+    init(gcmSenderId?: string): void;
     /**
      * Gets an observable for listening on synchronization progress. The last known
      * value is given when the listener subscribes to the observable.
@@ -34,15 +44,29 @@ export declare class PixliveService {
      */
     getEnterContextObservable(): Observable<string>;
     /**
-     * Requests a synchronization with PixLive Maker
+     * Synchronize the PixLive SDK with the web platform.
+     * The synchronization can be done in different ways.
+     *
+     * 1) The synchronization can be done without using the tags, in this case, an empty
+     * array is given as parameter.
+     *
+     * 2) The syncronization can be done with one or more tags. Use an array of strings: ['tag1', 'tag2'].
+     * In this case, all contents having one or more of the given tags will be synchronized.
+     * Think of it as => (tag1 OR tag2).
+     *
+     * 3) The synchronization can be done with a combination of tags. Example: [['lang_en', 'tag1'], ['lang_en', 'tag2']].
+     * In this case, the contents having tags 'lang_en' AND 'tag1' will be synchonized together with the contents having the 'lang_en' AND 'tag2'.
+     * Think of it as => (lang_en AND tag1) OR (lang_en AND tag2).
+     *
+     * @param tags
      */
-    syncWithTags(tagsObs: Observable<string[][]>): void;
+    sync(tags: any): void;
     /**
      * Gets the nearby GPS points
      * @param latitude the current latitude
      * @param longitude the current longitude
      */
-    getGpsPoints(latitude: number, longitude: number): Promise<GPSPoint[]>;
+    getNearbyGpsPoints(latitude: number, longitude: number): Promise<GPSPoint[]>;
     /**
      * Gets all GPS points in the given bounding box.
      * @param minLat the minimum latitude
@@ -52,10 +76,23 @@ export declare class PixliveService {
      */
     getGpsPointsInBoundingBox(minLat: any, minLon: any, maxLat: any, maxLon: any): Promise<GPSPoint[]>;
     /**
-     * return the specified context
+     * Return the specified context
      * @param contextId the ID of the context
      */
     getContext(contextId: string): Promise<Context>;
+    /**
+     * Opens the given context
+     * @param contextId the ID of the context to open
+     */
+    activate(contextId: string): void;
+    /**
+     * Computes the distance between to GPS points
+     * @param latitude1 the latitude of the first point
+     * @param longitude1 the longitude of the first point
+     * @param latitude2 the latitude of the second point
+     * @param longitude2 the longitude of the second point
+     */
+    computeDistanceBetweenGPSPoints(latitude1: number, longitude1: number, latitude2: number, longitude2: number): Promise<number>;
 }
 /**
  * Class representing a PixLive Maker GPS point.
@@ -69,6 +106,9 @@ export declare class GPSPoint {
     label: string;
     contextId: string;
 }
+/**
+ * Class representing a Context.
+ */
 export declare class Context {
     activate: () => void;
     contextId: string;
@@ -79,6 +119,9 @@ export declare class Context {
     notificationTitle: string;
     notificationMessage: string;
 }
+/**
+ * Class representing a Event triggered by a content
+ */
 export declare class EventFromContent {
     name: string;
     params: string;

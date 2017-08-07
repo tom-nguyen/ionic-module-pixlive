@@ -1,42 +1,21 @@
-import { Component, ElementRef, Renderer, ViewChild } from '@angular/core';
-import { Platform, ViewController } from 'ionic-angular';
+import { Component, ViewChild } from '@angular/core';
 import { PixliveDirective } from './pixlive.directive';
 import { PixliveService } from './pixlive-service';
 var PixliveComponent = (function () {
-    function PixliveComponent(platform, el, renderer, viewCtrl, pixliveService) {
-        this.platform = platform;
-        this.el = el;
-        this.renderer = renderer;
-        this.viewCtrl = viewCtrl;
+    function PixliveComponent(pixliveService) {
         this.pixliveService = pixliveService;
     }
     PixliveComponent.prototype.ngOnInit = function () {
         var _this = this;
         this.pixliveService.getAnnotationPresenceObservable().subscribe(function (visible) { return _this.cameraView.setTouchEnabled(visible); });
-        // this.renderer.setElementStyle(this.el.nativeElement, 'display', 'inline-block');
-        // let node = this.el.nativeElement.parentElement;
-        // while (node) {
-        //   this.renderer.setElementStyle(node, 'background-color', 'transparent');
-        //   node = node.parentElement;
-        // }
-        // let rect = this.el.nativeElement.getBoundingClientRect();
-        // console.log(this.el);
-        // console.log(rect);
-        // // this.viewCtrl..subscribe(() => {
-        // //   console.log("did enter");
-        // //   let rect = this.el.nativeElement.getBoundingClientRect();
-        // //   console.log(rect);
-        // //   console.log(window.scrollX + " " + window.scrollY);
-        // // });
     };
-    PixliveComponent.prototype.ngAfterViewInit = function () {
-        //console.log("comp ng after view init");
-    };
-    PixliveComponent.prototype.ngDoCheck = function () {
-        // console.log("comp ng do check");
-    };
-    PixliveComponent.prototype.ngAfterViewChecked = function () {
-        // console.log("comp ng after view checked");
+    /**
+     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+     * If a view in on top of the component, then you must disable the click interception.
+     * @param clickable true if the view is clickable and intercept all touch events, false otherwise.
+     */
+    PixliveComponent.prototype.setClickable = function (clickable) {
+        this.cameraView.setTouchEnabled(clickable);
     };
     PixliveComponent.decorators = [
         { type: Component, args: [{
@@ -46,10 +25,6 @@ var PixliveComponent = (function () {
     ];
     /** @nocollapse */
     PixliveComponent.ctorParameters = function () { return [
-        { type: Platform, },
-        { type: ElementRef, },
-        { type: Renderer, },
-        { type: ViewController, },
         { type: PixliveService, },
     ]; };
     PixliveComponent.propDecorators = {

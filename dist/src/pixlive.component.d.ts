@@ -1,17 +1,15 @@
-import { ElementRef, OnInit, Renderer } from '@angular/core';
-import { Platform, ViewController } from 'ionic-angular';
+import { OnInit } from '@angular/core';
 import { PixliveDirective } from './pixlive.directive';
 import { PixliveService } from './pixlive-service';
 export declare class PixliveComponent implements OnInit {
-    private platform;
-    private el;
-    private renderer;
-    private viewCtrl;
     private pixliveService;
     cameraView: PixliveDirective;
-    constructor(platform: Platform, el: ElementRef, renderer: Renderer, viewCtrl: ViewController, pixliveService: PixliveService);
+    constructor(pixliveService: PixliveService);
     ngOnInit(): void;
-    ngAfterViewInit(): void;
-    ngDoCheck(): void;
-    ngAfterViewChecked(): void;
+    /**
+     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+     * If a view in on top of the component, then you must disable the click interception.
+     * @param clickable true if the view is clickable and intercept all touch events, false otherwise.
+     */
+    setClickable(clickable: boolean): void;
 }

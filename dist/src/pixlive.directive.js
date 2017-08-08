@@ -62,7 +62,7 @@ var PixliveDirective = (function () {
                 if (window.cordova) {
                     // Create the camera view
                     _this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
-                    window.addEventListener("orientationchange", function () { return _this.onOrientationChange; }, false);
+                    window.addEventListener("orientationchange", function () { return _this.onOrientationChange(); }, false);
                 }
                 else {
                     // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.

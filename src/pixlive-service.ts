@@ -22,6 +22,8 @@ export class PixliveService {
   private annotationPresence: Subject<boolean> = new Subject();
   private eventFromContent: Subject<EventFromContent> = new Subject();
   private enterContext: Subject<string> = new Subject();
+  private qrCodeSynchronization: Subject<string> = new Subject();
+  private codeRecognition: Subject<string> = new Subject();
 
   constructor(
     private ngZone: NgZone,
@@ -40,6 +42,7 @@ export class PixliveService {
         }
         // Listen for different PixLive events
         window.cordova.plugins.PixLive.onEventReceived = (event) => {
+          console.log("PixLive new event: " + JSON.stringify(event));
           if (event.type === "presentAnnotations") {
             this.ngZone.run(() => {
               this.annotationPresence.next(true);
@@ -61,6 +64,15 @@ export class PixliveService {
             this.enterContext.next(event.context);
           } else if (event.type === "syncProgress") {
             this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
+          } else if (event.type === "codeRecognize") {
+            //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
+            let code: string = event.code;
+            if (code.indexOf('pixliveplayer/') === 0) {
+              let tag = code.substring(14);
+              this.qrCodeSynchronization.next(tag);
+            } else {
+              this.codeRecognition.next(code);
+            }
           }
         }
       }
@@ -99,6 +111,22 @@ export class PixliveService {
    */
   public getEnterContextObservable(): Observable<string> {
     return this.enterContext.asObservable();
+  }
+
+  /**
+   * Gets an observable that is called when a code (e.g. QR code) is recognized.
+   * It gives the content of the code. See also getQrCodeSynchronizationRequest().
+   */
+  public getCodeRecognition(): Observable<string> {
+    return this.codeRecognition.asObservable();
+  }
+
+  /**
+   * Gets an observable that is called when a synchronization QR code is scanned.
+   * It gives the tag to synchronize
+   */
+  public getQrCodeSynchronizationRequest() {
+    return this.qrCodeSynchronization.asObservable();
   }
 
   /**

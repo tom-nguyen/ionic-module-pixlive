@@ -91,6 +91,7 @@ var PixliveDirective = (function () {
      * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
      */
     PixliveDirective.prototype.setTouchEnabled = function (enabled) {
+        console.log("Set touch enabled: " + enabled);
         if (enabled) {
             this.arView.enableTouch();
         }

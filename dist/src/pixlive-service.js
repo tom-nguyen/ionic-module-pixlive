@@ -31,6 +31,7 @@ var PixliveService = (function () {
                 }
                 // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
+                    console.log("PixLive new event: " + JSON.stringify(event));
                     if (event.type === "presentAnnotations") {
                         _this.ngZone.run(function () {
                             _this.annotationPresence.next(true);

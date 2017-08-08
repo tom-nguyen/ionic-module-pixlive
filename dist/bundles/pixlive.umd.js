@@ -95,6 +95,7 @@ var PixliveDirective = (function () {
      * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
      */
     PixliveDirective.prototype.setTouchEnabled = function (enabled) {
+        console.log("Set touch enabled: " + enabled);
         if (enabled) {
             this.arView.enableTouch();
         }
@@ -146,6 +147,7 @@ var PixliveService = (function () {
                 }
                 // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
+                    console.log("PixLive new event: " + JSON.stringify(event));
                     if (event.type === "presentAnnotations") {
                         _this.ngZone.run(function () {
                             _this.annotationPresence.next(true);

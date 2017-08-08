@@ -1,6 +1,6 @@
 {
   "name": "ionic-module-pixlive",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ionic module for using the PixLive SDK",
   "main": "dist/bundles/pixlive.umd.min.js",
   "devDependencies": {
@@ -12,7 +12,9 @@
     "@angular/http": "4.1.3",
     "@angular/platform-browser": "4.1.3",
     "@angular/platform-browser-dynamic": "4.1.3",
+    "copyfiles": "1.2.0",
     "ionic-angular": "3.6.0",
+    "rimraf": "2.6.1",
     "rollup": "0.43.0",
     "rxjs": "5.4.0",
     "typescript": "2.4.1",
@@ -20,10 +22,12 @@
     "zone.js": "0.8.12"
   },
   "scripts": {
+    "cleanup": "rimraf dist/bundles dist/src dist/index.d.ts dist/index.js dist/index.js.map dist/index.metadata.json",
     "transpile": "ngc",
     "package": "rollup -c",
     "minify": "uglifyjs dist/bundles/pixlive.umd.js --screw-ie8 --compress --mangle --comments --output dist/bundles/pixlive.umd.min.js",
-    "build": "npm run transpile && npm run package && npm run minify"
+    "copy": "copyfiles README.md dist",
+    "build": "npm run cleanup && npm run transpile && npm run package && npm run minify && npm run copy"
   },
   "keywords": [
     "augmented reality",

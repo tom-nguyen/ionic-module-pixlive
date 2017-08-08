@@ -1,0 +1,20 @@
+{
+  "name": "ionic-module-pixlive",
+  "version": "0.1.1",
+  "description": "Ionic module for using the PixLive SDK",
+  "main": "bundles/pixlive.umd.min.js",
+  "scripts": {},
+  "keywords": [
+    "augmented reality",
+    "ionic",
+    "PixLive",
+    "Vidinoti"
+  ],
+  "author": "Johan Leuenberger",
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/core": "^4.0.0",
+    "ionic-angular": "^3.6.0",
+    "rxjs": "^5.4.0"
+  }
+}

@@ -17,6 +17,8 @@ var PixliveService = (function () {
         this.annotationPresence = new Subject();
         this.eventFromContent = new Subject();
         this.enterContext = new Subject();
+        this.qrCodeSynchronization = new Subject();
+        this.codeRecognition = new Subject();
     }
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -58,6 +60,17 @@ var PixliveService = (function () {
                     else if (event.type === "syncProgress") {
                         _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
                     }
+                    else if (event.type === "codeRecognize") {
+                        //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
+                        var code = event.code;
+                        if (code.indexOf('pixliveplayer/') === 0) {
+                            var tag = code.substring(14);
+                            _this.qrCodeSynchronization.next(tag);
+                        }
+                        else {
+                            _this.codeRecognition.next(code);
+                        }
+                    }
                 };
             }
         });
@@ -91,6 +104,20 @@ var PixliveService = (function () {
      */
     PixliveService.prototype.getEnterContextObservable = function () {
         return this.enterContext.asObservable();
+    };
+    /**
+     * Gets an observable that is called when a code (e.g. QR code) is recognized.
+     * It gives the content of the code. See also getQrCodeSynchronizationRequest().
+     */
+    PixliveService.prototype.getCodeRecognition = function () {
+        return this.codeRecognition.asObservable();
+    };
+    /**
+     * Gets an observable that is called when a synchronization QR code is scanned.
+     * It gives the tag to synchronize
+     */
+    PixliveService.prototype.getQrCodeSynchronizationRequest = function () {
+        return this.qrCodeSynchronization.asObservable();
     };
     /**
      * Synchronize the PixLive SDK with the web platform.

@@ -15,6 +15,8 @@ export declare class PixliveService {
     private annotationPresence;
     private eventFromContent;
     private enterContext;
+    private qrCodeSynchronization;
+    private codeRecognition;
     constructor(ngZone: NgZone, platform: Platform);
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -43,6 +45,16 @@ export declare class PixliveService {
      * the public ID of the context.
      */
     getEnterContextObservable(): Observable<string>;
+    /**
+     * Gets an observable that is called when a code (e.g. QR code) is recognized.
+     * It gives the content of the code. See also getQrCodeSynchronizationRequest().
+     */
+    getCodeRecognition(): Observable<string>;
+    /**
+     * Gets an observable that is called when a synchronization QR code is scanned.
+     * It gives the tag to synchronize
+     */
+    getQrCodeSynchronizationRequest(): Observable<string>;
     /**
      * Synchronize the PixLive SDK with the web platform.
      * The synchronization can be done in different ways.

@@ -27,10 +27,16 @@ npm run build
 Update the version in `package.json` and `dist/package.json`.
 
 ```
+# Publish on NPM
 npm run build
 npm publish dist
+# Commit your changes
+git commit -m "your message"
+git push
+# Tag the release
+git tag -a v0.3.0 -m "release 0.3.0"
+git push origin --tags
 ```
-
 
 References
 ----------

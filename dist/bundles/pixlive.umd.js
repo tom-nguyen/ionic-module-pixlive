@@ -132,6 +132,7 @@ var PixliveService = (function () {
         this.annotationPresence = new rxjs_Subject.Subject();
         this.eventFromContent = new rxjs_Subject.Subject();
         this.enterContext = new rxjs_Subject.Subject();
+        this.exitContext = new rxjs_Subject.Subject();
         this.qrCodeSynchronization = new rxjs_Subject.Subject();
         this.codeRecognition = new rxjs_Subject.Subject();
     }
@@ -171,6 +172,10 @@ var PixliveService = (function () {
                     else if (event.type === "enterContext") {
                         //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
                         _this.enterContext.next(event.context);
+                    }
+                    else if (event.type === "exitContext") {
+                        //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
+                        _this.exitContext.next(event.context);
                     }
                     else if (event.type === "syncProgress") {
                         _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
@@ -219,6 +224,13 @@ var PixliveService = (function () {
      */
     PixliveService.prototype.getEnterContextObservable = function () {
         return this.enterContext.asObservable();
+    };
+    /**
+     * Gets an observable that is called when a context is exited. It gives
+     * the public ID of the context.
+     */
+    PixliveService.prototype.getExitContextObservable = function () {
+        return this.exitContext.asObservable();
     };
     /**
      * Gets an observable that is called when a code (e.g. QR code) is recognized.

@@ -22,6 +22,7 @@ export class PixliveService {
   private annotationPresence: Subject<boolean> = new Subject();
   private eventFromContent: Subject<EventFromContent> = new Subject();
   private enterContext: Subject<string> = new Subject();
+  private exitContext: Subject<string> = new Subject();
   private qrCodeSynchronization: Subject<string> = new Subject();
   private codeRecognition: Subject<string> = new Subject();
 
@@ -62,6 +63,9 @@ export class PixliveService {
           } else if (event.type === "enterContext") {
             //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
             this.enterContext.next(event.context);
+          } else if (event.type === "exitContext") {
+            //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
+            this.exitContext.next(event.context);
           } else if (event.type === "syncProgress") {
             this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
           } else if (event.type === "codeRecognize") {
@@ -111,6 +115,14 @@ export class PixliveService {
    */
   public getEnterContextObservable(): Observable<string> {
     return this.enterContext.asObservable();
+  }
+
+  /**
+   * Gets an observable that is called when a context is exited. It gives
+   * the public ID of the context.
+   */
+  public getExitContextObservable(): Observable<string> {
+    return this.exitContext.asObservable();
   }
 
   /**

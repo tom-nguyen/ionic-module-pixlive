@@ -15,6 +15,7 @@ export declare class PixliveService {
     private annotationPresence;
     private eventFromContent;
     private enterContext;
+    private exitContext;
     private qrCodeSynchronization;
     private codeRecognition;
     constructor(ngZone: NgZone, platform: Platform);
@@ -45,6 +46,11 @@ export declare class PixliveService {
      * the public ID of the context.
      */
     getEnterContextObservable(): Observable<string>;
+    /**
+     * Gets an observable that is called when a context is exited. It gives
+     * the public ID of the context.
+     */
+    getExitContextObservable(): Observable<string>;
     /**
      * Gets an observable that is called when a code (e.g. QR code) is recognized.
      * It gives the content of the code. See also getQrCodeSynchronizationRequest().

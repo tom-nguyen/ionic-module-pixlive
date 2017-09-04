@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
+import { PixliveService } from './pixlive-service';
 import { PixliveComponent } from './pixlive.component';
 import { PixliveDirective } from './pixlive.directive';
-import { PixliveService } from './pixlive-service';
 var PixliveModule = (function () {
     function PixliveModule() {
     }

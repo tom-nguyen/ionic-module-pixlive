@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
-import { PixliveDirective } from './pixlive.directive';
 import { PixliveService } from './pixlive-service';
+import { PixliveDirective } from './pixlive.directive';
 var PixliveComponent = (function () {
     function PixliveComponent(pixliveService) {
         this.pixliveService = pixliveService;

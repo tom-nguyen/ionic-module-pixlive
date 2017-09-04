@@ -1,6 +1,6 @@
 import { OnInit } from '@angular/core';
-import { PixliveDirective } from './pixlive.directive';
 import { PixliveService } from './pixlive-service';
+import { PixliveDirective } from './pixlive.directive';
 export declare class PixliveComponent implements OnInit {
     private pixliveService;
     cameraView: PixliveDirective;

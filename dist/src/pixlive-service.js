@@ -34,33 +34,32 @@ var PixliveService = (function () {
                 }
                 // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
-                    console.log("PixLive new event: " + JSON.stringify(event));
                     _this.ngZone.run(function () {
-                        if (event.type === "presentAnnotations") {
+                        if (event.type === 'presentAnnotations') {
                             _this.annotationPresence.next(true);
                         }
-                        else if (event.type === "hideAnnotations") {
+                        else if (event.type === 'hideAnnotations') {
                             _this.annotationPresence.next(false);
                         }
-                        else if (event.type === "eventFromContent") {
+                        else if (event.type === 'eventFromContent') {
                             //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
                             var eventFromContent = new EventFromContent();
                             eventFromContent.name = event.eventName;
                             eventFromContent.params = event.eventParams;
                             _this.eventFromContent.next(eventFromContent);
                         }
-                        else if (event.type === "enterContext") {
+                        else if (event.type === 'enterContext') {
                             //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
                             _this.enterContext.next(event.context);
                         }
-                        else if (event.type === "exitContext") {
+                        else if (event.type === 'exitContext') {
                             //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
                             _this.exitContext.next(event.context);
                         }
-                        else if (event.type === "syncProgress") {
-                            _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
+                        else if (event.type === 'syncProgress') {
+                            _this.synchronizationProgress.next(parseInt('' + (event.progress * 100)));
                         }
-                        else if (event.type === "codeRecognize") {
+                        else if (event.type === 'codeRecognize') {
                             //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
                             var code = event.code;
                             if (code.indexOf('pixliveplayer/') === 0) {
@@ -146,7 +145,6 @@ var PixliveService = (function () {
      */
     PixliveService.prototype.sync = function (tags) {
         var _this = this;
-        console.log("Synchronization with tags: " + JSON.stringify(tags));
         this.synchronizationProgress.next(0);
         this.platform.ready().then(function () {
             if (window.cordova) {
@@ -191,11 +189,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyGpsPoints failed");
+                    reject('getNearbyGpsPoints failed');
                 });
             }
             else {
-                reject("getNearbyGpsPoints failed: no cordova plugin");
+                reject('getNearbyGpsPoints failed: no cordova plugin');
             }
         });
     };
@@ -211,11 +209,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("isContainingBeacons failed");
+                    reject('isContainingBeacons failed');
                 });
             }
             else {
-                reject("isContainingBeacons failed: no cordova plugin");
+                reject('isContainingBeacons failed: no cordova plugin');
             }
         });
     };
@@ -231,11 +229,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("isContainingGPSPoints failed");
+                    reject('isContainingGPSPoints failed');
                 });
             }
             else {
-                reject("isContainingGPSPoints failed: no cordova plugin");
+                reject('isContainingGPSPoints failed: no cordova plugin');
             }
         });
     };
@@ -251,11 +249,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyBeacons failed");
+                    reject('getNearbyBeacons failed');
                 });
             }
             else {
-                reject("getNearbyBeacons failed: no cordova plugin");
+                reject('getNearbyBeacons failed: no cordova plugin');
             }
         });
     };
@@ -271,11 +269,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyStatus failed");
+                    reject('getNearbyStatus failed');
                 });
             }
             else {
-                reject("getNearbyStatus failed: no cordova plugin");
+                reject('getNearbyStatus failed: no cordova plugin');
             }
         });
     };
@@ -292,11 +290,11 @@ var PixliveService = (function () {
                 window.cordova.plugins.PixLive.getGPSPointsInBoundingBox(minLat, minLon, maxLat, maxLon, function (data) {
                     resolve(data);
                 }, function () {
-                    reject("Error");
+                    reject('Error');
                 });
             }
             else {
-                reject("No cordova plugin");
+                reject('No cordova plugin');
             }
         });
     };
@@ -313,11 +311,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getContext failed");
+                    reject('getContext failed');
                 });
             }
             else {
-                reject("getContext failed: no cordova plugin");
+                reject('getContext failed: no cordova plugin');
             }
         });
     };
@@ -344,11 +342,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("computeDistanceBetweenGPSPoints failed");
+                    reject('computeDistanceBetweenGPSPoints failed');
                 });
             }
             else {
-                reject("computeDistanceBetweenGPSPoints failed: no cordova plugin");
+                reject('computeDistanceBetweenGPSPoints failed: no cordova plugin');
             }
         });
     };

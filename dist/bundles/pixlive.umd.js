@@ -4,119 +4,6 @@
 	(factory((global.pixlive = global.pixlive || {}),global.ng.core,global.ionicangular,global.Rx,global.Rx));
 }(this, (function (exports,_angular_core,ionicAngular,rxjs_BehaviorSubject,rxjs_Subject) { 'use strict';
 
-var PixliveDirective = (function () {
-    function PixliveDirective(platform, el, renderer, viewCtrl) {
-        this.platform = platform;
-        this.el = el;
-        this.renderer = renderer;
-        this.viewCtrl = viewCtrl;
-    }
-    /**
-     * Initializes the AR view lifecycle
-     */
-    PixliveDirective.prototype.initArViewLifeCycle = function () {
-        var _this = this;
-        this.viewCtrl.willEnter.subscribe(function () {
-            if (_this.arView) {
-                _this.arView.beforeEnter();
-                _this.onOrientationChange();
-            }
-        });
-        this.viewCtrl.didEnter.subscribe(function () {
-            if (_this.arView) {
-                _this.arView.afterEnter();
-            }
-            if (_this.fakeCamera) {
-                _this.renderer.setElementStyle(_this.fakeCamera, 'display', 'block');
-            }
-        });
-        this.viewCtrl.willLeave.subscribe(function () {
-            if (_this.arView) {
-                _this.arView.beforeLeave();
-            }
-            if (_this.fakeCamera) {
-                _this.renderer.setElementStyle(_this.fakeCamera, 'display', 'none');
-            }
-        });
-        this.viewCtrl.didLeave.subscribe(function () {
-            if (_this.arView) {
-                _this.arView.afterLeave();
-            }
-        });
-    };
-    /**
-     * Call this method after an orientation change for resizing the AR view
-     * @param element
-     * @param view
-     */
-    PixliveDirective.prototype.onOrientationChange = function () {
-        var _this = this;
-        setTimeout(function () {
-            var rect = _this.el.nativeElement.getBoundingClientRect();
-            _this.arView.resize(rect.left, rect.top, rect.width, rect.height);
-        }, 300);
-    };
-    PixliveDirective.prototype.ngOnInit = function () {
-        var _this = this;
-        this.renderer.setElementStyle(this.el.nativeElement, 'display', 'inline-block');
-        this.initArViewLifeCycle();
-        this.platform.ready().then(function () {
-            setTimeout(function () {
-                var rect = _this.el.nativeElement.getBoundingClientRect();
-                if (window.cordova) {
-                    // Create the camera view
-                    _this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
-                    window.addEventListener("orientationchange", function () { return _this.onOrientationChange(); }, false);
-                }
-                else {
-                    // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.
-                    var fakeCamera = document.createElement("DIV");
-                    document.body.appendChild(fakeCamera);
-                    _this.renderer.setElementStyle(fakeCamera, 'position', 'fixed');
-                    _this.renderer.setElementStyle(fakeCamera, 'background-color', 'gray');
-                    _this.renderer.setElementStyle(fakeCamera, 'left', rect.left + 'px');
-                    _this.renderer.setElementStyle(fakeCamera, 'top', rect.top + 'px');
-                    _this.renderer.setElementStyle(fakeCamera, 'width', rect.width + 'px');
-                    _this.renderer.setElementStyle(fakeCamera, 'height', rect.height + 'px');
-                    _this.fakeCamera = fakeCamera;
-                }
-            }, 300);
-        });
-        // The AR view is placed below the application so we set all views that are on top transparent.
-        var node = this.el.nativeElement.parentElement;
-        while (node) {
-            this.renderer.setElementStyle(node, 'background-color', 'transparent');
-            node = node.parentElement;
-        }
-    };
-    /**
-     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
-     * If a view in on top of the component, then you must disable the click interception.
-     * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
-     */
-    PixliveDirective.prototype.setTouchEnabled = function (enabled) {
-        if (enabled) {
-            this.arView.enableTouch();
-        }
-        else {
-            this.arView.disableTouch();
-        }
-    };
-    PixliveDirective.decorators = [
-        { type: _angular_core.Directive, args: [{
-                    selector: 'pixlive-camera-view'
-                },] },
-    ];
-    /** @nocollapse */
-    PixliveDirective.ctorParameters = function () { return [
-        { type: ionicAngular.Platform, },
-        { type: _angular_core.ElementRef, },
-        { type: _angular_core.Renderer, },
-        { type: ionicAngular.ViewController, },
-    ]; };
-    return PixliveDirective;
-}());
-
 /**
  * Service for interacting with the PixLive SDK.
  * Call the init() method when starting your application.
@@ -149,33 +36,32 @@ var PixliveService = (function () {
                 }
                 // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
-                    console.log("PixLive new event: " + JSON.stringify(event));
                     _this.ngZone.run(function () {
-                        if (event.type === "presentAnnotations") {
+                        if (event.type === 'presentAnnotations') {
                             _this.annotationPresence.next(true);
                         }
-                        else if (event.type === "hideAnnotations") {
+                        else if (event.type === 'hideAnnotations') {
                             _this.annotationPresence.next(false);
                         }
-                        else if (event.type === "eventFromContent") {
+                        else if (event.type === 'eventFromContent') {
                             //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
                             var eventFromContent = new EventFromContent();
                             eventFromContent.name = event.eventName;
                             eventFromContent.params = event.eventParams;
                             _this.eventFromContent.next(eventFromContent);
                         }
-                        else if (event.type === "enterContext") {
+                        else if (event.type === 'enterContext') {
                             //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
                             _this.enterContext.next(event.context);
                         }
-                        else if (event.type === "exitContext") {
+                        else if (event.type === 'exitContext') {
                             //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
                             _this.exitContext.next(event.context);
                         }
-                        else if (event.type === "syncProgress") {
-                            _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
+                        else if (event.type === 'syncProgress') {
+                            _this.synchronizationProgress.next(parseInt('' + (event.progress * 100)));
                         }
-                        else if (event.type === "codeRecognize") {
+                        else if (event.type === 'codeRecognize') {
                             //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
                             var code = event.code;
                             if (code.indexOf('pixliveplayer/') === 0) {
@@ -261,7 +147,6 @@ var PixliveService = (function () {
      */
     PixliveService.prototype.sync = function (tags) {
         var _this = this;
-        console.log("Synchronization with tags: " + JSON.stringify(tags));
         this.synchronizationProgress.next(0);
         this.platform.ready().then(function () {
             if (window.cordova) {
@@ -306,11 +191,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyGpsPoints failed");
+                    reject('getNearbyGpsPoints failed');
                 });
             }
             else {
-                reject("getNearbyGpsPoints failed: no cordova plugin");
+                reject('getNearbyGpsPoints failed: no cordova plugin');
             }
         });
     };
@@ -326,11 +211,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("isContainingBeacons failed");
+                    reject('isContainingBeacons failed');
                 });
             }
             else {
-                reject("isContainingBeacons failed: no cordova plugin");
+                reject('isContainingBeacons failed: no cordova plugin');
             }
         });
     };
@@ -346,11 +231,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("isContainingGPSPoints failed");
+                    reject('isContainingGPSPoints failed');
                 });
             }
             else {
-                reject("isContainingGPSPoints failed: no cordova plugin");
+                reject('isContainingGPSPoints failed: no cordova plugin');
             }
         });
     };
@@ -366,11 +251,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyBeacons failed");
+                    reject('getNearbyBeacons failed');
                 });
             }
             else {
-                reject("getNearbyBeacons failed: no cordova plugin");
+                reject('getNearbyBeacons failed: no cordova plugin');
             }
         });
     };
@@ -386,11 +271,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getNearbyStatus failed");
+                    reject('getNearbyStatus failed');
                 });
             }
             else {
-                reject("getNearbyStatus failed: no cordova plugin");
+                reject('getNearbyStatus failed: no cordova plugin');
             }
         });
     };
@@ -407,11 +292,11 @@ var PixliveService = (function () {
                 window.cordova.plugins.PixLive.getGPSPointsInBoundingBox(minLat, minLon, maxLat, maxLon, function (data) {
                     resolve(data);
                 }, function () {
-                    reject("Error");
+                    reject('Error');
                 });
             }
             else {
-                reject("No cordova plugin");
+                reject('No cordova plugin');
             }
         });
     };
@@ -428,11 +313,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("getContext failed");
+                    reject('getContext failed');
                 });
             }
             else {
-                reject("getContext failed: no cordova plugin");
+                reject('getContext failed: no cordova plugin');
             }
         });
     };
@@ -459,11 +344,11 @@ var PixliveService = (function () {
                         resolve(data);
                     });
                 }, function () {
-                    reject("computeDistanceBetweenGPSPoints failed");
+                    reject('computeDistanceBetweenGPSPoints failed');
                 });
             }
             else {
-                reject("computeDistanceBetweenGPSPoints failed: no cordova plugin");
+                reject('computeDistanceBetweenGPSPoints failed: no cordova plugin');
             }
         });
     };
@@ -508,6 +393,119 @@ var NearbyStatus = (function () {
     function NearbyStatus() {
     }
     return NearbyStatus;
+}());
+
+var PixliveDirective = (function () {
+    function PixliveDirective(platform, el, renderer, viewCtrl) {
+        this.platform = platform;
+        this.el = el;
+        this.renderer = renderer;
+        this.viewCtrl = viewCtrl;
+    }
+    /**
+     * Initializes the AR view lifecycle
+     */
+    PixliveDirective.prototype.initArViewLifeCycle = function () {
+        var _this = this;
+        this.viewCtrl.willEnter.subscribe(function () {
+            if (_this.arView) {
+                _this.arView.beforeEnter();
+                _this.onOrientationChange();
+            }
+        });
+        this.viewCtrl.didEnter.subscribe(function () {
+            if (_this.arView) {
+                _this.arView.afterEnter();
+            }
+            if (_this.fakeCamera) {
+                _this.renderer.setElementStyle(_this.fakeCamera, 'display', 'block');
+            }
+        });
+        this.viewCtrl.willLeave.subscribe(function () {
+            if (_this.arView) {
+                _this.arView.beforeLeave();
+            }
+            if (_this.fakeCamera) {
+                _this.renderer.setElementStyle(_this.fakeCamera, 'display', 'none');
+            }
+        });
+        this.viewCtrl.didLeave.subscribe(function () {
+            if (_this.arView) {
+                _this.arView.afterLeave();
+            }
+        });
+    };
+    /**
+     * Call this method after an orientation change for resizing the AR view
+     * @param element
+     * @param view
+     */
+    PixliveDirective.prototype.onOrientationChange = function () {
+        var _this = this;
+        setTimeout(function () {
+            var rect = _this.el.nativeElement.getBoundingClientRect();
+            _this.arView.resize(rect.left, rect.top, rect.width, rect.height);
+        }, 300);
+    };
+    PixliveDirective.prototype.ngOnInit = function () {
+        var _this = this;
+        this.renderer.setElementStyle(this.el.nativeElement, 'display', 'inline-block');
+        this.initArViewLifeCycle();
+        this.platform.ready().then(function () {
+            setTimeout(function () {
+                var rect = _this.el.nativeElement.getBoundingClientRect();
+                if (window.cordova) {
+                    // Create the camera view
+                    _this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
+                    window.addEventListener('orientationchange', function () { return _this.onOrientationChange(); }, false);
+                }
+                else {
+                    // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.
+                    var fakeCamera = document.createElement('DIV');
+                    document.body.appendChild(fakeCamera);
+                    _this.renderer.setElementStyle(fakeCamera, 'position', 'fixed');
+                    _this.renderer.setElementStyle(fakeCamera, 'background-color', 'gray');
+                    _this.renderer.setElementStyle(fakeCamera, 'left', rect.left + 'px');
+                    _this.renderer.setElementStyle(fakeCamera, 'top', rect.top + 'px');
+                    _this.renderer.setElementStyle(fakeCamera, 'width', rect.width + 'px');
+                    _this.renderer.setElementStyle(fakeCamera, 'height', rect.height + 'px');
+                    _this.fakeCamera = fakeCamera;
+                }
+            }, 300);
+        });
+        // The AR view is placed below the application so we set all views that are on top transparent.
+        var node = this.el.nativeElement.parentElement;
+        while (node) {
+            this.renderer.setElementStyle(node, 'background-color', 'transparent');
+            node = node.parentElement;
+        }
+    };
+    /**
+     * Defines whether the view is clickable. If the view is clickable, it will intercept the touch event.
+     * If a view in on top of the component, then you must disable the click interception.
+     * @param enabled true if the view is clickable and intercept all touch events, false otherwise.
+     */
+    PixliveDirective.prototype.setTouchEnabled = function (enabled) {
+        if (enabled) {
+            this.arView.enableTouch();
+        }
+        else {
+            this.arView.disableTouch();
+        }
+    };
+    PixliveDirective.decorators = [
+        { type: _angular_core.Directive, args: [{
+                    selector: 'pixlive-camera-view'
+                },] },
+    ];
+    /** @nocollapse */
+    PixliveDirective.ctorParameters = function () { return [
+        { type: ionicAngular.Platform, },
+        { type: _angular_core.ElementRef, },
+        { type: _angular_core.Renderer, },
+        { type: ionicAngular.ViewController, },
+    ]; };
+    return PixliveDirective;
 }());
 
 var PixliveComponent = (function () {

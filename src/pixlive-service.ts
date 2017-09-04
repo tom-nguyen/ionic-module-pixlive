@@ -43,27 +43,26 @@ export class PixliveService {
         }
         // Listen for different PixLive events
         window.cordova.plugins.PixLive.onEventReceived = (event) => {
-          console.log("PixLive new event: " + JSON.stringify(event));
           this.ngZone.run(() => {
-            if (event.type === "presentAnnotations") {
+            if (event.type === 'presentAnnotations') {
               this.annotationPresence.next(true);
-            } else if (event.type === "hideAnnotations") {
+            } else if (event.type === 'hideAnnotations') {
               this.annotationPresence.next(false);
-            } else if (event.type === "eventFromContent") {
+            } else if (event.type === 'eventFromContent') {
               //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
               let eventFromContent = new EventFromContent();
               eventFromContent.name = event.eventName;
               eventFromContent.params = event.eventParams;
               this.eventFromContent.next(eventFromContent);
-            } else if (event.type === "enterContext") {
+            } else if (event.type === 'enterContext') {
               //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
               this.enterContext.next(event.context);
-            } else if (event.type === "exitContext") {
+            } else if (event.type === 'exitContext') {
               //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
               this.exitContext.next(event.context);
-            } else if (event.type === "syncProgress") {
-              this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
-            } else if (event.type === "codeRecognize") {
+            } else if (event.type === 'syncProgress') {
+              this.synchronizationProgress.next(parseInt('' + (event.progress * 100)));
+            } else if (event.type === 'codeRecognize') {
               //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
               let code: string = event.code;
               if (code.indexOf('pixliveplayer/') === 0) {
@@ -155,7 +154,6 @@ export class PixliveService {
    * @param tags
    */
   public sync(tags) {
-    console.log("Synchronization with tags: " + JSON.stringify(tags));
     this.synchronizationProgress.next(0);
     this.platform.ready().then(() => {
       if (window.cordova) {
@@ -201,10 +199,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("getNearbyGpsPoints failed");
+            reject('getNearbyGpsPoints failed');
           });
       } else {
-        reject("getNearbyGpsPoints failed: no cordova plugin");
+        reject('getNearbyGpsPoints failed: no cordova plugin');
       }
     });
   }
@@ -222,10 +220,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("isContainingBeacons failed");
+            reject('isContainingBeacons failed');
           });
       } else {
-        reject("isContainingBeacons failed: no cordova plugin");
+        reject('isContainingBeacons failed: no cordova plugin');
       }
     });
   }
@@ -243,10 +241,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("isContainingGPSPoints failed");
+            reject('isContainingGPSPoints failed');
           });
       } else {
-        reject("isContainingGPSPoints failed: no cordova plugin");
+        reject('isContainingGPSPoints failed: no cordova plugin');
       }
     });
   }
@@ -264,16 +262,16 @@ export class PixliveService {
             });
           },
           () => {
-            reject("getNearbyBeacons failed");
+            reject('getNearbyBeacons failed');
           });
       } else {
-        reject("getNearbyBeacons failed: no cordova plugin");
+        reject('getNearbyBeacons failed: no cordova plugin');
       }
     });
   }
 
   /**
-   * Retrieves the nearby status. 
+   * Retrieves the nearby status.
    */
   public getNearbyStatus(): Promise<NearbyStatus> {
     return new Promise((resolve, reject) => {
@@ -285,10 +283,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("getNearbyStatus failed");
+            reject('getNearbyStatus failed');
           });
       } else {
-        reject("getNearbyStatus failed: no cordova plugin");
+        reject('getNearbyStatus failed: no cordova plugin');
       }
     });
   }
@@ -308,10 +306,10 @@ export class PixliveService {
             resolve(data as GPSPoint[]);
           },
           () => {
-            reject("Error");
+            reject('Error');
           });
       } else {
-        reject("No cordova plugin");
+        reject('No cordova plugin');
       }
     });
   }
@@ -331,10 +329,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("getContext failed");
+            reject('getContext failed');
           });
       } else {
-        reject("getContext failed: no cordova plugin");
+        reject('getContext failed: no cordova plugin');
       }
     });
   }
@@ -364,10 +362,10 @@ export class PixliveService {
             });
           },
           () => {
-            reject("computeDistanceBetweenGPSPoints failed");
+            reject('computeDistanceBetweenGPSPoints failed');
           });
       } else {
-        reject("computeDistanceBetweenGPSPoints failed: no cordova plugin");
+        reject('computeDistanceBetweenGPSPoints failed: no cordova plugin');
       }
     });
   }

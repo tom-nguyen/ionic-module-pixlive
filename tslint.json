@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "arrow-return-shorthand": true,
+    "curly": true,
+    "import-spacing": true,
+    "indent": [true, "spaces", 2],
+    "quotemark": [true, "single"],
+    "no-console": [true,
+      "debug",
+      "info",
+      "log"
+    ],
+    "no-duplicate-variable": true,
+    "no-trailing-whitespace": true,
+    "no-unused-variable": true,
+    "ordered-imports": true
+  },
+  "rulesDirectory": [
+    "node_modules/tslint-eslint-rules/dist/rules"
+  ]
+}

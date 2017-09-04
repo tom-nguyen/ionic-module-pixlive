@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { PixliveDirective } from './pixlive.directive';
+
 import { PixliveService } from './pixlive-service';
+import { PixliveDirective } from './pixlive.directive';
 
 @Component({
   selector: 'pixlive',

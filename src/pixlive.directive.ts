@@ -77,10 +77,10 @@ export class PixliveDirective implements OnInit {
         if (window.cordova) {
           // Create the camera view
           this.arView = window.cordova.plugins.PixLive.createARView(rect.left, rect.top, rect.width, rect.height);
-          window.addEventListener("orientationchange", () => this.onOrientationChange(), false);
+          window.addEventListener('orientationchange', () => this.onOrientationChange(), false);
         } else {
           // As a fallback, we create a grey element for replacing the camera view. Useful for dev purpose.
-          let fakeCamera = document.createElement("DIV");
+          let fakeCamera = document.createElement('DIV');
           document.body.appendChild(fakeCamera);
           this.renderer.setElementStyle(fakeCamera, 'position', 'fixed');
           this.renderer.setElementStyle(fakeCamera, 'background-color', 'gray');

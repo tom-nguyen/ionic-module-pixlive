@@ -44,40 +44,36 @@ export class PixliveService {
         // Listen for different PixLive events
         window.cordova.plugins.PixLive.onEventReceived = (event) => {
           console.log("PixLive new event: " + JSON.stringify(event));
-          if (event.type === "presentAnnotations") {
-            this.ngZone.run(() => {
+          this.ngZone.run(() => {
+            if (event.type === "presentAnnotations") {
               this.annotationPresence.next(true);
-            });
-          } else if (event.type === "hideAnnotations") {
-            this.ngZone.run(() => {
+            } else if (event.type === "hideAnnotations") {
               this.annotationPresence.next(false);
-            });
-          } else if (event.type === "eventFromContent") {
-            //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-            this.ngZone.run(() => {
+            } else if (event.type === "eventFromContent") {
+              //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
               let eventFromContent = new EventFromContent();
               eventFromContent.name = event.eventName;
               eventFromContent.params = event.eventParams;
               this.eventFromContent.next(eventFromContent);
-            });
-          } else if (event.type === "enterContext") {
-            //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
-            this.enterContext.next(event.context);
-          } else if (event.type === "exitContext") {
-            //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
-            this.exitContext.next(event.context);
-          } else if (event.type === "syncProgress") {
-            this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
-          } else if (event.type === "codeRecognize") {
-            //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
-            let code: string = event.code;
-            if (code.indexOf('pixliveplayer/') === 0) {
-              let tag = code.substring(14);
-              this.qrCodeSynchronization.next(tag);
-            } else {
-              this.codeRecognition.next(code);
+            } else if (event.type === "enterContext") {
+              //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
+              this.enterContext.next(event.context);
+            } else if (event.type === "exitContext") {
+              //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
+              this.exitContext.next(event.context);
+            } else if (event.type === "syncProgress") {
+              this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
+            } else if (event.type === "codeRecognize") {
+              //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
+              let code: string = event.code;
+              if (code.indexOf('pixliveplayer/') === 0) {
+                let tag = code.substring(14);
+                this.qrCodeSynchronization.next(tag);
+              } else {
+                this.codeRecognition.next(code);
+              }
             }
-          }
+          });
         }
       }
     });
@@ -214,6 +210,90 @@ export class PixliveService {
   }
 
   /**
+   * Checks whether there are beacon contexts.
+   */
+  public isContainingBeacons(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (window.cordova) {
+        window.cordova.plugins.PixLive.isContainingBeacons(
+          (data) => {
+            this.ngZone.run(() => {
+              resolve(data as boolean);
+            });
+          },
+          () => {
+            reject("isContainingBeacons failed");
+          });
+      } else {
+        reject("isContainingBeacons failed: no cordova plugin");
+      }
+    });
+  }
+
+  /**
+   * Checks whether there are GPS contexts.
+   */
+  public isContainingGPSPoints(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (window.cordova) {
+        window.cordova.plugins.PixLive.isContainingGPSPoints(
+          (data) => {
+            this.ngZone.run(() => {
+              resolve(data as boolean);
+            });
+          },
+          () => {
+            reject("isContainingGPSPoints failed");
+          });
+      } else {
+        reject("isContainingGPSPoints failed: no cordova plugin");
+      }
+    });
+  }
+
+  /**
+   * Gets the nearby beacons
+   */
+  public getNearbyBeacons(): Promise<Context[]> {
+    return new Promise((resolve, reject) => {
+      if (window.cordova) {
+        window.cordova.plugins.PixLive.getNearbyBeacons(
+          (data) => {
+            this.ngZone.run(() => {
+              resolve(data as Context[]);
+            });
+          },
+          () => {
+            reject("getNearbyBeacons failed");
+          });
+      } else {
+        reject("getNearbyBeacons failed: no cordova plugin");
+      }
+    });
+  }
+
+  /**
+   * Retrieves the nearby status. 
+   */
+  public getNearbyStatus(): Promise<NearbyStatus> {
+    return new Promise((resolve, reject) => {
+      if (window.cordova) {
+        window.cordova.plugins.PixLive.getNearbyStatus(
+          (data) => {
+            this.ngZone.run(() => {
+              resolve(data as NearbyStatus);
+            });
+          },
+          () => {
+            reject("getNearbyStatus failed");
+          });
+      } else {
+        reject("getNearbyStatus failed: no cordova plugin");
+      }
+    });
+  }
+
+  /**
    * Gets all GPS points in the given bounding box.
    * @param minLat the minimum latitude
    * @param minLon the minimum longitude
@@ -327,4 +407,22 @@ export class Context {
 export class EventFromContent {
   name: string;
   params: string;
+}
+
+/**
+ * Class containing the status of nearby (location permission and location/bluetooth on/off)
+ */
+export class NearbyStatus {
+  /**
+   * If value is "disabled", the location permission has not been granted.
+   */
+  authorizationStatus?: string;
+  /**
+   * If value is "disabled", the location is disabled.
+   */
+  locationStatus?: string;
+  /**
+   * If value is "disabled", the bluetooth is off.
+   */
+  bluetoothStatus?: string;
 }

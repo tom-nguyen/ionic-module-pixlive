@@ -86,6 +86,22 @@ export declare class PixliveService {
      */
     getNearbyGpsPoints(latitude: number, longitude: number): Promise<GPSPoint[]>;
     /**
+     * Checks whether there are beacon contexts.
+     */
+    isContainingBeacons(): Promise<boolean>;
+    /**
+     * Checks whether there are GPS contexts.
+     */
+    isContainingGPSPoints(): Promise<boolean>;
+    /**
+     * Gets the nearby beacons
+     */
+    getNearbyBeacons(): Promise<Context[]>;
+    /**
+     * Retrieves the nearby status.
+     */
+    getNearbyStatus(): Promise<NearbyStatus>;
+    /**
      * Gets all GPS points in the given bounding box.
      * @param minLat the minimum latitude
      * @param minLon the minimum longitude
@@ -143,4 +159,21 @@ export declare class Context {
 export declare class EventFromContent {
     name: string;
     params: string;
+}
+/**
+ * Class containing the status of nearby (location permission and location/bluetooth on/off)
+ */
+export declare class NearbyStatus {
+    /**
+     * If value is "disabled", the location permission has not been granted.
+     */
+    authorizationStatus?: string;
+    /**
+     * If value is "disabled", the location is disabled.
+     */
+    locationStatus?: string;
+    /**
+     * If value is "disabled", the bluetooth is off.
+     */
+    bluetoothStatus?: string;
 }

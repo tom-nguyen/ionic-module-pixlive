@@ -150,47 +150,43 @@ var PixliveService = (function () {
                 // Listen for different PixLive events
                 window.cordova.plugins.PixLive.onEventReceived = function (event) {
                     console.log("PixLive new event: " + JSON.stringify(event));
-                    if (event.type === "presentAnnotations") {
-                        _this.ngZone.run(function () {
+                    _this.ngZone.run(function () {
+                        if (event.type === "presentAnnotations") {
                             _this.annotationPresence.next(true);
-                        });
-                    }
-                    else if (event.type === "hideAnnotations") {
-                        _this.ngZone.run(function () {
+                        }
+                        else if (event.type === "hideAnnotations") {
                             _this.annotationPresence.next(false);
-                        });
-                    }
-                    else if (event.type === "eventFromContent") {
-                        //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-                        _this.ngZone.run(function () {
+                        }
+                        else if (event.type === "eventFromContent") {
+                            //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
                             var eventFromContent = new EventFromContent();
                             eventFromContent.name = event.eventName;
                             eventFromContent.params = event.eventParams;
                             _this.eventFromContent.next(eventFromContent);
-                        });
-                    }
-                    else if (event.type === "enterContext") {
-                        //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
-                        _this.enterContext.next(event.context);
-                    }
-                    else if (event.type === "exitContext") {
-                        //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
-                        _this.exitContext.next(event.context);
-                    }
-                    else if (event.type === "syncProgress") {
-                        _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
-                    }
-                    else if (event.type === "codeRecognize") {
-                        //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
-                        var code = event.code;
-                        if (code.indexOf('pixliveplayer/') === 0) {
-                            var tag = code.substring(14);
-                            _this.qrCodeSynchronization.next(tag);
                         }
-                        else {
-                            _this.codeRecognition.next(code);
+                        else if (event.type === "enterContext") {
+                            //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
+                            _this.enterContext.next(event.context);
                         }
-                    }
+                        else if (event.type === "exitContext") {
+                            //Example: {"type":"exitContext","context":"q7044o3xhfqkc7q"}
+                            _this.exitContext.next(event.context);
+                        }
+                        else if (event.type === "syncProgress") {
+                            _this.synchronizationProgress.next(parseInt("" + (event.progress * 100)));
+                        }
+                        else if (event.type === "codeRecognize") {
+                            //Example: {"type":"codeRecognize","codeType":"qrcode","code":"pixliveplayer/default"}
+                            var code = event.code;
+                            if (code.indexOf('pixliveplayer/') === 0) {
+                                var tag = code.substring(14);
+                                _this.qrCodeSynchronization.next(tag);
+                            }
+                            else {
+                                _this.codeRecognition.next(code);
+                            }
+                        }
+                    });
                 };
             }
         });
@@ -319,6 +315,86 @@ var PixliveService = (function () {
         });
     };
     /**
+     * Checks whether there are beacon contexts.
+     */
+    PixliveService.prototype.isContainingBeacons = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (window.cordova) {
+                window.cordova.plugins.PixLive.isContainingBeacons(function (data) {
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
+                }, function () {
+                    reject("isContainingBeacons failed");
+                });
+            }
+            else {
+                reject("isContainingBeacons failed: no cordova plugin");
+            }
+        });
+    };
+    /**
+     * Checks whether there are GPS contexts.
+     */
+    PixliveService.prototype.isContainingGPSPoints = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (window.cordova) {
+                window.cordova.plugins.PixLive.isContainingGPSPoints(function (data) {
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
+                }, function () {
+                    reject("isContainingGPSPoints failed");
+                });
+            }
+            else {
+                reject("isContainingGPSPoints failed: no cordova plugin");
+            }
+        });
+    };
+    /**
+     * Gets the nearby beacons
+     */
+    PixliveService.prototype.getNearbyBeacons = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (window.cordova) {
+                window.cordova.plugins.PixLive.getNearbyBeacons(function (data) {
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
+                }, function () {
+                    reject("getNearbyBeacons failed");
+                });
+            }
+            else {
+                reject("getNearbyBeacons failed: no cordova plugin");
+            }
+        });
+    };
+    /**
+     * Retrieves the nearby status.
+     */
+    PixliveService.prototype.getNearbyStatus = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (window.cordova) {
+                window.cordova.plugins.PixLive.getNearbyStatus(function (data) {
+                    _this.ngZone.run(function () {
+                        resolve(data);
+                    });
+                }, function () {
+                    reject("getNearbyStatus failed");
+                });
+            }
+            else {
+                reject("getNearbyStatus failed: no cordova plugin");
+            }
+        });
+    };
+    /**
      * Gets all GPS points in the given bounding box.
      * @param minLat the minimum latitude
      * @param minLon the minimum longitude
@@ -402,12 +478,36 @@ var PixliveService = (function () {
     return PixliveService;
 }());
 /**
+ * Class representing a PixLive Maker GPS point.
+ */
+var GPSPoint = (function () {
+    function GPSPoint() {
+    }
+    return GPSPoint;
+}());
+/**
+ * Class representing a Context.
+ */
+var Context = (function () {
+    function Context() {
+    }
+    return Context;
+}());
+/**
  * Class representing a Event triggered by a content
  */
 var EventFromContent = (function () {
     function EventFromContent() {
     }
     return EventFromContent;
+}());
+/**
+ * Class containing the status of nearby (location permission and location/bluetooth on/off)
+ */
+var NearbyStatus = (function () {
+    function NearbyStatus() {
+    }
+    return NearbyStatus;
 }());
 
 var PixliveComponent = (function () {
@@ -466,6 +566,9 @@ var PixliveModule = (function () {
 exports.PixliveModule = PixliveModule;
 exports.PixliveComponent = PixliveComponent;
 exports.PixliveService = PixliveService;
+exports.Context = Context;
+exports.GPSPoint = GPSPoint;
+exports.NearbyStatus = NearbyStatus;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

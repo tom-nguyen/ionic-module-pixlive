@@ -22,6 +22,7 @@ var PixliveService = (function () {
         this.exitContext = new rxjs_Subject.Subject();
         this.qrCodeSynchronization = new rxjs_Subject.Subject();
         this.codeRecognition = new rxjs_Subject.Subject();
+        this.generatedCoupon = new rxjs_Subject.Subject();
     }
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -44,11 +45,7 @@ var PixliveService = (function () {
                             _this.annotationPresence.next(false);
                         }
                         else if (event.type === 'eventFromContent') {
-                            //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-                            var eventFromContent = new EventFromContent();
-                            eventFromContent.name = event.eventName;
-                            eventFromContent.params = event.eventParams;
-                            _this.eventFromContent.next(eventFromContent);
+                            _this.onNewEventFromContent(event);
                         }
                         else if (event.type === 'enterContext') {
                             //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
@@ -76,6 +73,25 @@ var PixliveService = (function () {
                 };
             }
         });
+    };
+    PixliveService.prototype.onNewEventFromContent = function (event) {
+        //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
+        var eventFromContent = new EventFromContent();
+        eventFromContent.name = event.eventName;
+        eventFromContent.params = event.eventParams;
+        this.eventFromContent.next(eventFromContent);
+        if (event.eventName === 'couponGenerated') {
+            var params = JSON.parse(event.eventParams);
+            var coupon = new GeneratedCoupon(params.contextId, params.url);
+            this.generatedCoupon.next(coupon);
+        }
+    };
+    /**
+     * Gets an observable that is called every time a new coupon is generated
+     * via a coupon content.
+     */
+    PixliveService.prototype.getGeneratedCouponObservable = function () {
+        return this.generatedCoupon.asObservable();
     };
     /**
      * Gets an observable for listening on synchronization progress. The last known
@@ -329,6 +345,15 @@ var PixliveService = (function () {
         this.getContext(contextId).then(function (context) { return context.activate(); });
     };
     /**
+     * Opens the given URL using the SDK browser
+     * @param url a link
+     */
+    PixliveService.prototype.openURLInInternalBrowser = function (url) {
+        if (window.cordova) {
+            window.cordova.plugins.PixLive.openURLInInternalBrowser(url);
+        }
+    };
+    /**
      * Computes the distance between to GPS points
      * @param latitude1 the latitude of the first point
      * @param longitude1 the longitude of the first point
@@ -393,6 +418,16 @@ var NearbyStatus = (function () {
     function NearbyStatus() {
     }
     return NearbyStatus;
+}());
+/**
+ * Coupon received via an "eventFromContent" event
+ */
+var GeneratedCoupon = (function () {
+    function GeneratedCoupon(contextId, couponUrl) {
+        this.contextId = contextId;
+        this.couponUrl = couponUrl;
+    }
+    return GeneratedCoupon;
 }());
 
 var PixliveDirective = (function () {

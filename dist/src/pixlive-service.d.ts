@@ -18,12 +18,19 @@ export declare class PixliveService {
     private exitContext;
     private qrCodeSynchronization;
     private codeRecognition;
+    private generatedCoupon;
     constructor(ngZone: NgZone, platform: Platform);
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
      * @param gcmSenderId the Google GCM sender ID for the push notifications. Leave it empty if you do not want to enable it.
      */
     init(gcmSenderId?: string): void;
+    private onNewEventFromContent(event);
+    /**
+     * Gets an observable that is called every time a new coupon is generated
+     * via a coupon content.
+     */
+    getGeneratedCouponObservable(): Observable<GeneratedCoupon>;
     /**
      * Gets an observable for listening on synchronization progress. The last known
      * value is given when the listener subscribes to the observable.
@@ -120,6 +127,11 @@ export declare class PixliveService {
      */
     activate(contextId: string): void;
     /**
+     * Opens the given URL using the SDK browser
+     * @param url a link
+     */
+    openURLInInternalBrowser(url: string): void;
+    /**
      * Computes the distance between to GPS points
      * @param latitude1 the latitude of the first point
      * @param longitude1 the longitude of the first point
@@ -176,4 +188,12 @@ export declare class NearbyStatus {
      * If value is "disabled", the bluetooth is off.
      */
     bluetoothStatus?: string;
+}
+/**
+ * Coupon received via an "eventFromContent" event
+ */
+export declare class GeneratedCoupon {
+    contextId: string;
+    couponUrl: string;
+    constructor(contextId: string, couponUrl: string);
 }

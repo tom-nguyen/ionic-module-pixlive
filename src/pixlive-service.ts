@@ -25,6 +25,7 @@ export class PixliveService {
   private exitContext: Subject<string> = new Subject();
   private qrCodeSynchronization: Subject<string> = new Subject();
   private codeRecognition: Subject<string> = new Subject();
+  private generatedCoupon: Subject<GeneratedCoupon> = new Subject();
 
   constructor(
     private ngZone: NgZone,
@@ -49,11 +50,7 @@ export class PixliveService {
             } else if (event.type === 'hideAnnotations') {
               this.annotationPresence.next(false);
             } else if (event.type === 'eventFromContent') {
-              //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
-              let eventFromContent = new EventFromContent();
-              eventFromContent.name = event.eventName;
-              eventFromContent.params = event.eventParams;
-              this.eventFromContent.next(eventFromContent);
+              this.onNewEventFromContent(event);
             } else if (event.type === 'enterContext') {
               //Example: {"type":"enterContext","context":"q7044o3xhfqkc7q"}
               this.enterContext.next(event.context);
@@ -76,6 +73,28 @@ export class PixliveService {
         }
       }
     });
+  }
+
+  private onNewEventFromContent(event: any) {
+    //Example: {"type":"eventFromContent","eventName":"multipleChoice","eventParams":"{\"question\":\"Quel est la profondeur du lac de gruyere?\",\"answers\":[\"1m\",\"10m\",\"100m\"],\"correctAnswer\":2,\"hint\":\"On peut se noyer\"}"}
+    let eventFromContent = new EventFromContent();
+    eventFromContent.name = event.eventName;
+    eventFromContent.params = event.eventParams;
+    this.eventFromContent.next(eventFromContent);
+
+    if (event.eventName === 'couponGenerated') {
+      let params = JSON.parse(event.eventParams);
+      let coupon = new GeneratedCoupon(params.contextId, params.url);
+      this.generatedCoupon.next(coupon);
+    }
+  }
+
+  /**
+   * Gets an observable that is called every time a new coupon is generated
+   * via a coupon content.
+   */
+  public getGeneratedCouponObservable(): Observable<GeneratedCoupon> {
+    return this.generatedCoupon.asObservable();
   }
 
   /**
@@ -346,6 +365,16 @@ export class PixliveService {
   }
 
   /**
+   * Opens the given URL using the SDK browser
+   * @param url a link
+   */
+  public openURLInInternalBrowser(url: string) {
+    if (window.cordova) {
+      window.cordova.plugins.PixLive.openURLInInternalBrowser(url);
+    }
+  }
+
+  /**
    * Computes the distance between to GPS points
    * @param latitude1 the latitude of the first point
    * @param longitude1 the longitude of the first point
@@ -423,4 +452,11 @@ export class NearbyStatus {
    * If value is "disabled", the bluetooth is off.
    */
   bluetoothStatus?: string;
+}
+
+/**
+ * Coupon received via an "eventFromContent" event
+ */
+export class GeneratedCoupon {
+  constructor(public contextId: string, public couponUrl: string) {}
 }

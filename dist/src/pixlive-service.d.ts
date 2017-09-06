@@ -19,6 +19,7 @@ export declare class PixliveService {
     private qrCodeSynchronization;
     private codeRecognition;
     private generatedCoupon;
+    private synchronizationRequest;
     constructor(ngZone: NgZone, platform: Platform);
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -26,6 +27,11 @@ export declare class PixliveService {
      */
     init(gcmSenderId?: string): void;
     private onNewEventFromContent(event);
+    /**
+     * Gets an observable that is called when a content requests a synchronization with
+     * a list of tags (Context synchronization trigger)
+     */
+    getSynchronizationRequestObservable(): Observable<string[]>;
     /**
      * Gets an observable that is called every time a new coupon is generated
      * via a coupon content.

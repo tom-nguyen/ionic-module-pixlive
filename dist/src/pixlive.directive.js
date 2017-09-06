@@ -74,6 +74,7 @@ var PixliveDirective = (function () {
                     _this.renderer.setElementStyle(fakeCamera, 'top', rect.top + 'px');
                     _this.renderer.setElementStyle(fakeCamera, 'width', rect.width + 'px');
                     _this.renderer.setElementStyle(fakeCamera, 'height', rect.height + 'px');
+                    _this.renderer.setElementStyle(fakeCamera, 'z-index', '-1000');
                     _this.fakeCamera = fakeCamera;
                 }
             }, 300);

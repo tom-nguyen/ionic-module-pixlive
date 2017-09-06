@@ -88,6 +88,7 @@ export class PixliveDirective implements OnInit {
           this.renderer.setElementStyle(fakeCamera, 'top', rect.top + 'px');
           this.renderer.setElementStyle(fakeCamera, 'width', rect.width + 'px');
           this.renderer.setElementStyle(fakeCamera, 'height', rect.height + 'px');
+          this.renderer.setElementStyle(fakeCamera, 'z-index', '-1000');
           this.fakeCamera = fakeCamera;
         }
       }, 300);

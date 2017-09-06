@@ -23,6 +23,7 @@ var PixliveService = (function () {
         this.qrCodeSynchronization = new rxjs_Subject.Subject();
         this.codeRecognition = new rxjs_Subject.Subject();
         this.generatedCoupon = new rxjs_Subject.Subject();
+        this.synchronizationRequest = new rxjs_Subject.Subject();
     }
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -69,6 +70,10 @@ var PixliveService = (function () {
                                 _this.codeRecognition.next(code);
                             }
                         }
+                        else if (event.type === 'requireSync') {
+                            var tags = event.tags;
+                            _this.synchronizationRequest.next(tags);
+                        }
                     });
                 };
             }
@@ -85,6 +90,13 @@ var PixliveService = (function () {
             var coupon = new GeneratedCoupon(params.contextId, params.url);
             this.generatedCoupon.next(coupon);
         }
+    };
+    /**
+     * Gets an observable that is called when a content requests a synchronization with
+     * a list of tags (Context synchronization trigger)
+     */
+    PixliveService.prototype.getSynchronizationRequestObservable = function () {
+        return this.synchronizationRequest.asObservable();
     };
     /**
      * Gets an observable that is called every time a new coupon is generated
@@ -504,6 +516,7 @@ var PixliveDirective = (function () {
                     _this.renderer.setElementStyle(fakeCamera, 'top', rect.top + 'px');
                     _this.renderer.setElementStyle(fakeCamera, 'width', rect.width + 'px');
                     _this.renderer.setElementStyle(fakeCamera, 'height', rect.height + 'px');
+                    _this.renderer.setElementStyle(fakeCamera, 'z-index', '-1000');
                     _this.fakeCamera = fakeCamera;
                 }
             }, 300);

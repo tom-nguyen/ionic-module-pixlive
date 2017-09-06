@@ -26,6 +26,7 @@ export class PixliveService {
   private qrCodeSynchronization: Subject<string> = new Subject();
   private codeRecognition: Subject<string> = new Subject();
   private generatedCoupon: Subject<GeneratedCoupon> = new Subject();
+  private synchronizationRequest: Subject<string[]> = new Subject();
 
   constructor(
     private ngZone: NgZone,
@@ -68,6 +69,9 @@ export class PixliveService {
               } else {
                 this.codeRecognition.next(code);
               }
+            } else if (event.type === 'requireSync') {
+              let tags: string[] = event.tags;
+              this.synchronizationRequest.next(tags);
             }
           });
         }
@@ -87,6 +91,14 @@ export class PixliveService {
       let coupon = new GeneratedCoupon(params.contextId, params.url);
       this.generatedCoupon.next(coupon);
     }
+  }
+
+  /**
+   * Gets an observable that is called when a content requests a synchronization with
+   * a list of tags (Context synchronization trigger)
+   */
+  public getSynchronizationRequestObservable(): Observable<string[]> {
+    return this.synchronizationRequest.asObservable();
   }
 
   /**

@@ -21,6 +21,7 @@ var PixliveService = (function () {
         this.qrCodeSynchronization = new Subject();
         this.codeRecognition = new Subject();
         this.generatedCoupon = new Subject();
+        this.synchronizationRequest = new Subject();
     }
     /**
      * Initializes the SDK. In particular, it registers several listeners for the PixLive events.
@@ -67,6 +68,10 @@ var PixliveService = (function () {
                                 _this.codeRecognition.next(code);
                             }
                         }
+                        else if (event.type === 'requireSync') {
+                            var tags = event.tags;
+                            _this.synchronizationRequest.next(tags);
+                        }
                     });
                 };
             }
@@ -83,6 +88,13 @@ var PixliveService = (function () {
             var coupon = new GeneratedCoupon(params.contextId, params.url);
             this.generatedCoupon.next(coupon);
         }
+    };
+    /**
+     * Gets an observable that is called when a content requests a synchronization with
+     * a list of tags (Context synchronization trigger)
+     */
+    PixliveService.prototype.getSynchronizationRequestObservable = function () {
+        return this.synchronizationRequest.asObservable();
     };
     /**
      * Gets an observable that is called every time a new coupon is generated

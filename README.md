@@ -10,7 +10,21 @@ How to use
 2. Install this plugin: `npm install ionic-module-pixlive`
 3. Open the file `app.module.ts` and import the module: `import { PixliveModule } from 'ionic-module-pixlive';`
 4. Add the module in the `imports` section of the `@NgModule` declaration
-5. Add the Pixlive Component in an HTML page: `<pixlive style="width: 100%; height: 100%;"></pixlive>`
+5. Add the Pixlive Component (i.e. the AR scanner) in an HTML page: `<pixlive style="width: 100%; height: 100%;"></pixlive>`
+6. Initialize the PixLive module in `app.component.ts`
+```
+  constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, pixliveService: PixliveService) {
+    platform.ready().then(() => {
+      statusBar.styleDefault();
+      splashScreen.hide();
+      pixliveService.init();
+    });
+  }
+```
+7. Synchronize the application with the PixLive server (for example, every time that the application starts, it should synchronize with PixLive Maker)
+```
+    pixliveService.sync([]);
+```
 
 Contribute
 ----------

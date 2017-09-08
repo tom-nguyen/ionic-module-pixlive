@@ -13,20 +13,18 @@ How to use
 5. Add the Pixlive Component (i.e. the AR scanner) in an HTML page: `<pixlive style="width: 100%; height: 100%;"></pixlive>`
 6. Initialize the PixLive module in `app.component.ts`
 
-  ```
-    constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, pixliveService: PixliveService) {
-      platform.ready().then(() => {
-        statusBar.styleDefault();
-        splashScreen.hide();
-        pixliveService.init();
-      });
-    }
-  ```
+        constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, pixliveService: PixliveService) {
+          platform.ready().then(() => {
+            statusBar.styleDefault();
+            splashScreen.hide();
+            pixliveService.init();
+          });
+        }
+
 7. Synchronize the application with the PixLive server (for example, every time that the application starts, it should synchronize with PixLive Maker)
 
-  ```
-      pixliveService.sync([]);
-  ```
+        pixliveService.sync([]);
+
 
 Contribute
 ----------

@@ -12,6 +12,7 @@ How to use
 4. Add the module in the `imports` section of the `@NgModule` declaration
 5. Add the Pixlive Component (i.e. the AR scanner) in an HTML page: `<pixlive style="width: 100%; height: 100%;"></pixlive>`
 6. Initialize the PixLive module in `app.component.ts`
+
   ```
     constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, pixliveService: PixliveService) {
       platform.ready().then(() => {
@@ -22,6 +23,7 @@ How to use
     }
   ```
 7. Synchronize the application with the PixLive server (for example, every time that the application starts, it should synchronize with PixLive Maker)
+
   ```
       pixliveService.sync([]);
   ```

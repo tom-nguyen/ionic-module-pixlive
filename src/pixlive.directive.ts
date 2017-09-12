@@ -49,6 +49,11 @@ export class PixliveDirective implements OnInit {
     });
     this.viewCtrl.didLeave.subscribe(() => {
       if (this.arView) {
+        // we hide the view using resize. it avoids having the inverted camera
+        // in some scenario. For example, on Android, if we open the scan page, go to another
+        // tab, press the home button, go back to the app and go back to the scan, then
+        // the camera preview is inverted. Calling this resize method, avoid this problem
+        this.arView.resize(0, 0, 0, 0);
         this.arView.afterLeave();
       }
     });

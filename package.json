@@ -1,6 +1,6 @@
 {
   "name": "ionic-module-pixlive",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Ionic module for using the PixLive SDK",
   "main": "dist/bundles/pixlive.umd.min.js",
   "devDependencies": {
